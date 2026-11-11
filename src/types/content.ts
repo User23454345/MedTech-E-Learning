@@ -230,6 +230,8 @@ export interface Exam {
   pool: Question[];
   /** XP für das Bestehen (zusätzlich gibt es XP pro richtiger Antwort) */
   xp: number;
+  /** Themen-Tag → Lektions-ID, für Wiederholungsempfehlungen in der Auswertung */
+  topicLessons: Record<string, string>;
 }
 
 export type ModuleStatus = 'available' | 'coming-soon';
