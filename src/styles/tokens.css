@@ -1,0 +1,119 @@
+/*
+ * Design-Tokens – einzige Quelle für Farben, Abstände, Radien, Schatten.
+ * Farbwelt: Weiß, klinisches Blau, dezente Türkis-Akzente.
+ * Komponenten verwenden ausschließlich diese Variablen.
+ */
+:root {
+  /* Marke */
+  --c-primary-50: #eef5ff;
+  --c-primary-100: #d9e8ff;
+  --c-primary-200: #b8d4ff;
+  --c-primary-300: #8ab8ff;
+  --c-primary-400: #4f8fff;
+  --c-primary-500: #1f6bf0;
+  --c-primary-600: #0b5cd5;
+  --c-primary-700: #0a49ab;
+  --c-primary-800: #0e3d86;
+  --c-primary-900: #10326a;
+
+  --c-accent-50: #effdfa;
+  --c-accent-100: #cbf7ee;
+  --c-accent-200: #99eedd;
+  --c-accent-300: #5fdcc7;
+  --c-accent-400: #2dc3ad;
+  --c-accent-500: #14a795;
+  --c-accent-600: #0d867a;
+  --c-accent-700: #0f6b63;
+
+  /* Neutral (leicht bläulich) */
+  --c-bg: #f5f8fc;
+  --c-surface: #ffffff;
+  --c-surface-2: #f9fbfe;
+  --c-surface-3: #eef3f9;
+  --c-border: #e1e8f2;
+  --c-border-strong: #c9d4e3;
+  --c-text: #0f1f36;
+  --c-text-2: #43526a;
+  --c-text-3: #6b7a92;
+  --c-text-inverse: #ffffff;
+
+  /* Status */
+  --c-success: #12a150;
+  --c-success-bg: #e8f8ef;
+  --c-warning: #c27803;
+  --c-warning-bg: #fff6e0;
+  --c-danger: #d93a3a;
+  --c-danger-bg: #fdecec;
+  --c-info: var(--c-primary-600);
+  --c-info-bg: var(--c-primary-50);
+
+  /* Kurvenfarben (Beatmungsmonitor, angelehnt an gängige Konventionen) */
+  --c-wave-pressure: #f2b705;
+  --c-wave-flow: #2dc3ad;
+  --c-wave-volume: #6aa8ff;
+  --c-monitor-bg: #0b1626;
+  --c-monitor-grid: #1b2a40;
+  --c-monitor-text: #d7e3f4;
+
+  /* Gamification */
+  --c-xp: #7c5cff;
+  --c-xp-bg: #f1edff;
+  --c-gold: #e3a008;
+  --c-streak: #f26b1d;
+
+  /* Typografie */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.125rem;
+  --fs-xl: 1.375rem;
+  --fs-2xl: 1.75rem;
+  --fs-3xl: 2.25rem;
+  --fs-4xl: clamp(2.1rem, 1.4rem + 2.6vw, 3.25rem);
+
+  /* Abstände */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+
+  /* Radien & Schatten */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 22px;
+  --r-full: 999px;
+  --shadow-xs: 0 1px 2px rgba(15, 31, 54, 0.06);
+  --shadow-sm: 0 1px 3px rgba(15, 31, 54, 0.07), 0 1px 2px rgba(15, 31, 54, 0.04);
+  --shadow-md: 0 6px 18px -6px rgba(15, 31, 54, 0.12), 0 2px 6px rgba(15, 31, 54, 0.05);
+  --shadow-lg: 0 18px 40px -12px rgba(15, 31, 54, 0.22);
+  --ring: 0 0 0 3px rgba(31, 107, 240, 0.35);
+
+  /* Bewegung */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 140ms;
+  --dur-med: 260ms;
+  --dur-slow: 480ms;
+
+  /* Layout */
+  --header-h: 64px;
+  --content-max: 1200px;
+  --reading-max: 760px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur-med: 0ms;
+    --dur-slow: 0ms;
+  }
+}

@@ -1,0 +1,172 @@
+/* ---------- Button ---------- */
+.btn {
+  --btn-bg: var(--c-primary-600);
+  --btn-fg: #fff;
+  --btn-bd: transparent;
+  --btn-hover: var(--c-primary-700);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  height: 42px;
+  padding: 0 var(--sp-5);
+  border-radius: var(--r-md);
+  border: 1px solid var(--btn-bd);
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none !important;
+  transition: background var(--dur-fast), transform var(--dur-fast), box-shadow var(--dur-fast), border-color var(--dur-fast);
+  user-select: none;
+}
+.btn:hover:not(:disabled) { background: var(--btn-hover); }
+.btn:active:not(:disabled) { transform: translateY(1px) scale(0.99); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.sm { height: 34px; padding: 0 var(--sp-3); font-size: var(--fs-xs); border-radius: var(--r-sm); }
+.lg { height: 52px; padding: 0 var(--sp-6); font-size: var(--fs-md); border-radius: var(--r-lg); }
+.block { width: 100%; }
+.secondary { --btn-bg: var(--c-surface); --btn-fg: var(--c-text); --btn-bd: var(--c-border-strong); --btn-hover: var(--c-surface-3); }
+.ghost { --btn-bg: transparent; --btn-fg: var(--c-text-2); --btn-hover: var(--c-surface-3); }
+.soft { --btn-bg: var(--c-primary-50); --btn-fg: var(--c-primary-700); --btn-hover: var(--c-primary-100); }
+.accent { --btn-bg: var(--c-accent-500); --btn-hover: var(--c-accent-600); }
+.danger { --btn-bg: var(--c-danger); --btn-hover: #b92e2e; }
+.success { --btn-bg: var(--c-success); --btn-hover: #0e8642; }
+
+/* ---------- Card ---------- */
+.card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--sp-6);
+}
+.cardInteractive {
+  transition: transform var(--dur-med) var(--ease-out), box-shadow var(--dur-med), border-color var(--dur-med);
+  cursor: pointer;
+}
+.cardInteractive:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--c-primary-200);
+}
+.cardFlat { box-shadow: none; }
+.cardCompact { padding: var(--sp-4); }
+
+/* ---------- Progress ---------- */
+.bar {
+  position: relative;
+  height: 8px;
+  border-radius: var(--r-full);
+  background: var(--c-surface-3);
+  overflow: hidden;
+}
+.barFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--c-primary-500), var(--c-accent-400));
+  transition: width var(--dur-slow) var(--ease-out);
+}
+.barXp .barFill { background: linear-gradient(90deg, #8f74ff, var(--c-xp)); }
+.ring { position: relative; display: inline-grid; place-items: center; }
+.ring svg { transform: rotate(-90deg); }
+.ringTrack { stroke: var(--c-surface-3); }
+.ringFill { stroke: url(#ringGrad); transition: stroke-dashoffset var(--dur-slow) var(--ease-out); }
+.ringLabel { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 700; font-size: var(--fs-sm); }
+
+/* ---------- Chip / Tag ---------- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--r-full);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  background: var(--c-surface-3);
+  color: var(--c-text-2);
+  white-space: nowrap;
+}
+.chip-primary { background: var(--c-primary-50); color: var(--c-primary-700); }
+.chip-accent { background: var(--c-accent-50); color: var(--c-accent-700); }
+.chip-success { background: var(--c-success-bg); color: var(--c-success); }
+.chip-warning { background: var(--c-warning-bg); color: var(--c-warning); }
+.chip-danger { background: var(--c-danger-bg); color: var(--c-danger); }
+.chip-xp { background: var(--c-xp-bg); color: var(--c-xp); }
+
+/* ---------- IconBadge ---------- */
+.iconBadge {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  border-radius: var(--r-md);
+  background: linear-gradient(135deg, var(--c-primary-50), var(--c-accent-50));
+  color: var(--c-primary-600);
+}
+
+/* ---------- Toasts ---------- */
+.toasts {
+  position: fixed;
+  right: var(--sp-4);
+  bottom: var(--sp-4);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  width: min(360px, calc(100vw - 2 * var(--sp-4)));
+  pointer-events: none;
+}
+.toast {
+  pointer-events: auto;
+  display: flex;
+  gap: var(--sp-3);
+  align-items: flex-start;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-lg);
+  animation: toast-in var(--dur-med) var(--ease-spring) both;
+}
+.toastIcon { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; flex: none; }
+.toast-xp .toastIcon { background: var(--c-xp-bg); color: var(--c-xp); }
+.toast-badge .toastIcon { background: #fff4d6; color: var(--c-gold); }
+.toast-level .toastIcon { background: var(--c-primary-50); color: var(--c-primary-600); }
+.toast-daily .toastIcon { background: var(--c-accent-50); color: var(--c-accent-600); }
+.toast-info .toastIcon { background: var(--c-surface-3); color: var(--c-text-2); }
+.toastTitle { font-weight: 700; font-size: var(--fs-sm); }
+.toastMsg { font-size: var(--fs-xs); color: var(--c-text-3); }
+.toastClose { margin-left: auto; background: none; border: 0; color: var(--c-text-3); cursor: pointer; padding: 2px; }
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---------- Segmented control ---------- */
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  background: var(--c-surface-3);
+  border-radius: var(--r-md);
+  gap: 2px;
+}
+.segBtn {
+  border: 0;
+  background: transparent;
+  padding: 6px 14px;
+  border-radius: 9px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--c-text-2);
+  cursor: pointer;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.segBtn[aria-pressed='true'] {
+  background: var(--c-surface);
+  color: var(--c-primary-700);
+  box-shadow: var(--shadow-xs);
+}
