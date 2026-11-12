@@ -113,7 +113,7 @@ export const CURVE_CASES: CurveCase[] = [
   },
   {
     id: 'pc-compliance',
-    context: 'PC · P_insp 15 cmH₂O über PEEP · f 12/min · Ti 1,0 s',
+    context: 'PC · Pinsp 15 cmH₂O über PEEP · f 12/min · Ti 1,0 s',
     question: 'Im druckkontrollierten Modus ist die Druckkurve unverändert, aber das Volumen ist deutlich kleiner. Warum?',
     settings: pcBase,
     patient: { ...healthy, compliance_ml_per_cmH2O: 25 },
@@ -122,14 +122,14 @@ export const CURVE_CASES: CurveCase[] = [
     options: [
       { id: 'c', text: 'Die Compliance ist gesunken – gleicher Druck erzeugt weniger Volumen', correct: true, why: 'VT ≈ C · ΔP. Der Flow fällt zudem schneller auf null, weil τ = R · C kleiner ist.' },
       { id: 'r', text: 'Die Resistance ist gestiegen', why: 'Dann wäre der Spitzenflow kleiner und der Flow würde langsamer abfallen.' },
-      { id: 'pinsp', text: 'P_insp wurde reduziert', why: 'Die Druckkurve ist unverändert – der eingestellte Druck ist derselbe.' },
+      { id: 'pinsp', text: 'Pinsp wurde reduziert', why: 'Die Druckkurve ist unverändert – der eingestellte Druck ist derselbe.' },
       { id: 'leak', text: 'Leckage', why: 'Bei einem Leck kehrt die Volumenkurve nicht zur Nulllinie zurück.' },
     ],
     takeaway: 'Bei PC ist das VT die Variable: sinkende Compliance → VT ↓. Deshalb VTe- und MV-Alarme sorgfältig einstellen.',
   },
   {
     id: 'pc-resistance',
-    context: 'PC · P_insp 15 cmH₂O über PEEP · f 12/min · Ti 0,8 s',
+    context: 'PC · Pinsp 15 cmH₂O über PEEP · f 12/min · Ti 0,8 s',
     question: 'Der inspiratorische Flow ist niedriger und erreicht vor Ende der Inspiration nicht die Nulllinie. Was hat sich verändert?',
     settings: { ...pcBase, ti_s: 0.8 },
     patient: { ...healthy, resistance_cmH2O_per_L_s: 25 },
@@ -145,18 +145,18 @@ export const CURVE_CASES: CurveCase[] = [
   },
   {
     id: 'pmax',
-    context: 'VC · VT 500 ml · f 12/min · Ti 0,8 s · P_max 22 cmH₂O',
+    context: 'VC · VT 500 ml · f 12/min · Ti 0,8 s · Pmax 22 cmH₂O',
     question: 'Die Druckkurve wird oben abgeschnitten, der Flow endet abrupt. Was passiert hier?',
     settings: { ...vcBase, ti_s: 0.8, pause_s: 0, pmax_cmH2O: 22 },
     patient: { ...healthy, resistance_cmH2O_per_L_s: 20 },
     refSettings: { ...vcBase, ti_s: 0.8, pause_s: 0, pmax_cmH2O: 22 },
     refPatient: healthy,
     options: [
-      { id: 'pmax', text: 'Die Druckgrenze P_max wird erreicht – die Inspiration wird abgebrochen, das VT ist unvollständig', correct: true, why: 'Bei P_max beendet das Gerät im VC-Modus die Inspiration (Alarm „Atemwegsdruck hoch“). Das Volumen fehlt – Ursache (hier hohe Resistance) suchen.' },
+      { id: 'pmax', text: 'Die Druckgrenze Pmax wird erreicht – die Inspiration wird abgebrochen, das VT ist unvollständig', correct: true, why: 'Bei Pmax beendet das Gerät im VC-Modus die Inspiration (Alarm „Atemwegsdruck hoch“). Das Volumen fehlt – Ursache (hier hohe Resistance) suchen.' },
       { id: 'pc', text: 'Das Gerät arbeitet im PC-Modus', why: 'Im PC-Modus wäre der Druck über die gesamte Ti konstant, und der Flow wäre dezelerierend.' },
       { id: 'leak', text: 'Leckage', why: 'Ein Leck erklärt nicht den abrupt endenden Flow bei Erreichen eines Druckwerts.' },
       { id: 'c', text: 'Erhöhte Compliance', why: 'Eine höhere Compliance würde den Druck senken, nicht begrenzen.' },
     ],
-    takeaway: 'P_max ist eine Sicherheitsgrenze: Wird sie erreicht, fehlt Volumen. Ursache klären, statt die Grenze reflexhaft zu erhöhen.',
+    takeaway: 'Pmax ist eine Sicherheitsgrenze: Wird sie erreicht, fehlt Volumen. Ursache klären, statt die Grenze reflexhaft zu erhöhen.',
   },
 ];

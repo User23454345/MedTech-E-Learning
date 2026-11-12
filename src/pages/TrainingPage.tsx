@@ -10,10 +10,12 @@ import { CaseRunner } from '@/features/games/CaseRunner';
 import { useProgress } from '@/state/progress';
 import { AVAILABLE_MODULES } from '@/data/modules';
 import { GAME_KIND_LABEL, collectGames, lessonPath, type GameEntry } from '@/lib/moduleProgress';
+import { todayISO } from '@/lib/gamification';
 import type { Question } from '@/types/content';
 import { WidgetFrame } from './components/WidgetFrame';
 import { EmptyState } from './components/EmptyState';
 import s from './TrainingPage.module.css';
+import { useDocumentTitle } from '@/lib/useDocumentTitle';
 
 type TabId = 'blitz' | 'simulator' | 'kurven' | 'spiele';
 
@@ -33,6 +35,7 @@ const GAME_ICON: Record<GameEntry['kind'], IconName> = {
 };
 
 export default function TrainingPage() {
+  useDocumentTitle('Training');
   const [params, setParams] = useSearchParams();
   const tabParam = params.get('tab');
   const tab: TabId = isTab(tabParam) ? tabParam : 'blitz';
@@ -142,6 +145,7 @@ function BlitzPanel() {
   const { state } = useProgress();
   const pool = useMemo<Question[]>(() => AVAILABLE_MODULES.flatMap((m) => m.practicePool ?? []), []);
   const [session, setSession] = useState(0);
+  const todayBest = state.daily.date === todayISO() ? (state.daily.blitzBest ?? 0) : 0;
 
   return (
     <div className={s.blitzLayout}>
@@ -157,16 +161,18 @@ function BlitzPanel() {
         <div className={s.versus}>
           <div className={s.vsSide}>
             <span className={s.vsLabel}>Du – heute</span>
-            <span className={s.vsValue}>?</span>
+            <span className={s.vsValue}>{todayBest > 0 ? todayBest : '–'}</span>
           </div>
           <span className={s.vsBadge}>VS</span>
           <div className={s.vsSide}>
             <span className={s.vsLabel}>Dein Rekord</span>
-            <span className={s.vsValue}>{state.blitz.best}</span>
+            <span className={s.vsValue}>{state.blitz.best > 0 ? state.blitz.best : '–'}</span>
           </div>
         </div>
         <div className={s.duelMeta}>
-          <Chip icon="refresh">{state.blitz.plays} Runden gespielt</Chip>
+          <Chip icon="refresh">
+            {state.blitz.plays} {state.blitz.plays === 1 ? 'Runde' : 'Runden'} gespielt
+          </Chip>
           <Chip icon="book">{pool.length} Fragen im Pool</Chip>
         </div>
       </Card>

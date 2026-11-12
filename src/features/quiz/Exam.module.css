@@ -196,3 +196,9 @@
 @media (prefers-reduced-motion: reduce) {
   .qSlide, .topicFill, .backdrop, .dialog { animation: none; }
 }
+
+/* Scroll-Ziel: nicht unter Header (und mobil unter der sticky „Inhalt“-Leiste) verschwinden */
+.anchor { scroll-margin-top: calc(var(--header-h) + var(--sp-4)); }
+@media (max-width: 1024px) {
+  .anchor { scroll-margin-top: calc(var(--header-h) + 72px); }
+}

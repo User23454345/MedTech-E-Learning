@@ -1,7 +1,7 @@
 /**
  * Kleine Monitor-Kurve (Druck, Flow oder Volumen über die Zeit) mit Cursor.
  */
-import { useId, type ReactNode } from 'react';
+import { useId, useMemo, type ReactNode } from 'react';
 import { CYCLE, PHASES, type PhaseId, type Sample } from './breathModel';
 import s from './BreathCycle.module.css';
 
@@ -31,13 +31,19 @@ const PR = 8;
 const PT = 8;
 const PB = 8;
 
+function buildPath(samples: Sample[], k: Key, min: number, max: number): string {
+  const x = (tt: number) => PL + (tt / CYCLE) * (W - PL - PR);
+  const y = (v: number) => PT + (1 - (v - min) / (max - min)) * (H - PT - PB);
+  return samples.map((p, i) => `${i ? 'L' : 'M'}${x(p.t).toFixed(1)} ${y(p[k]).toFixed(1)}`).join(' ');
+}
+
 export function MiniCurve({ samples, field, extraField, min, max, ticks, color, label, unit, value, t, activePhase, decimals = 0 }: Props) {
   const clipId = useId().replace(/:/g, '');
   const x = (tt: number) => PL + (tt / CYCLE) * (W - PL - PR);
   const y = (v: number) => PT + (1 - (v - min) / (max - min)) * (H - PT - PB);
-  const path = (k: Key) => samples.map((p, i) => `${i ? 'L' : 'M'}${x(p.t).toFixed(1)} ${y(p[k]).toFixed(1)}`).join(' ');
-  const d = path(field);
-  const dExtra = extraField ? path(extraField) : null;
+  // Pfade nur bei geänderten Daten neu aufbauen – pro Frame ändert sich nur der Cursor
+  const d = useMemo(() => buildPath(samples, field, min, max), [samples, field, min, max]);
+  const dExtra = useMemo(() => (extraField ? buildPath(samples, extraField, min, max) : null), [samples, extraField, min, max]);
   const cx0 = x(t);
 
   return (

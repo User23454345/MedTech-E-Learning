@@ -2,8 +2,9 @@
  * Quiz-Block innerhalb einer Lektion: Fragen nacheinander mit sofortigem
  * Feedback, Fortschrittspunkten und Mini-Auswertung.
  *
- * XP: `recordAnswer` wird nur beim ERSTEN Versuch je Frage und Mount
- * aufgerufen (Ref-Set), damit „Nochmal“ kein XP-Farming erlaubt.
+ * XP: `recordAnswer` erhält einen stabilen Schlüssel je Frage; der Fortschritts-
+ * speicher wertet nur den ERSTEN Versuch (dauerhaft, auch nach Neuladen),
+ * damit „Nochmal“ kein XP-Farming erlaubt.
  */
 import { useMemo, useRef, useState } from 'react';
 import type { Question } from '@/types/content';
@@ -39,7 +40,7 @@ export function QuizBlock({ title, questions, contextId }: { title?: string; que
     const key = `${contextId}::${cur.question.id}`;
     if (!recorded.current.has(key)) {
       recorded.current.add(key);
-      recordAnswer(ok);
+      recordAnswer(ok, key);
     }
   };
 

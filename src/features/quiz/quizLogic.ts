@@ -36,6 +36,8 @@ export function prepareAll(qs: readonly Question[], rng: Rng = Math.random): Pre
 
 /** Zahl mit Komma oder Punkt parsen; null, wenn ungültig. */
 export function parseNumber(raw: string): number | null {
+  // Mehrdeutige Tausender-Schreibweise („1.000“, „12.500“) ablehnen statt still als 1 bzw. 12,5 zu lesen
+  if (/^[-+]?[1-9]\d{0,2}(\.\d{3})+$/.test(raw.trim())) return null;
   const cleaned = raw.trim().replace(/\s/g, '').replace(',', '.');
   if (!cleaned || !/^[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?$/i.test(cleaned)) return null;
   const v = Number(cleaned);
@@ -53,7 +55,7 @@ export function isAnswered(a: Answer | null | undefined): boolean {
     case 'multiple':
       return a.indices.length > 0;
     case 'numeric':
-      return a.raw.trim().length > 0;
+      return parseNumber(a.raw) !== null;
     default:
       return true;
   }

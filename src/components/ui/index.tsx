@@ -2,7 +2,7 @@
  * UI-Grundbausteine. Alle Features nutzen diese Komponenten, damit das
  * Erscheinungsbild konsistent bleibt.
  */
-import { forwardRef, type ButtonHTMLAttributes, type HTMLAttributes, type ReactNode } from 'react';
+import { forwardRef, useId, type ButtonHTMLAttributes, type HTMLAttributes, type ReactNode } from 'react';
 import { Link, type LinkProps } from 'react-router-dom';
 import s from './ui.module.css';
 import { Icon, type IconName } from './Icon';
@@ -74,11 +74,13 @@ export function ProgressRing({ value, size = 56, stroke = 6, children, label }: 
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const v = Math.max(0, Math.min(1, value));
+  // Eindeutige Gradient-ID je Instanz (keine doppelten IDs im DOM)
+  const gid = `ringGrad${useId().replace(/:/g, '')}`;
   return (
     <div className={s.ring} style={{ width: size, height: size }} role="img" aria-label={label ?? `${Math.round(v * 100)} % abgeschlossen`}>
-      <svg width={size} height={size}>
+      <svg width={size} height={size} aria-hidden focusable="false">
         <defs>
-          <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+          <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="var(--c-primary-500)" />
             <stop offset="100%" stopColor="var(--c-accent-400)" />
           </linearGradient>
@@ -86,6 +88,7 @@ export function ProgressRing({ value, size = 56, stroke = 6, children, label }: 
         <circle className={s.ringTrack} cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={stroke} />
         <circle
           className={s.ringFill}
+          stroke={`url(#${gid})`}
           cx={size / 2}
           cy={size / 2}
           r={r}

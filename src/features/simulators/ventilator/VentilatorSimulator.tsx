@@ -10,11 +10,15 @@ import {
   PATIENT_PRESETS,
   cycleTime_s,
   defaultAlarmLimits,
+  effectivePause_s,
+  effectiveTi_s,
   evaluateAlarms,
   fmt,
   fmtIE,
   pbwFromHeight,
   steadyState,
+  timeConstant_s,
+  vcFlow_L_s,
   type BreathMetrics,
   type PatientParams,
   type PatientPresetId,
@@ -80,6 +84,29 @@ function initialSettings(p: PatientPresetId, mode: VentMode): VentSettings {
   return base;
 }
 
+const roundTo = (v: number, step: number) => Math.round(v / step) * step;
+const clampNum = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+
+/** Mindestabstand Pmax über PEEP [cmH₂O] – reale Geräte verriegeln diese Einstellungen gegeneinander */
+const PMAX_MIN_ABOVE_PEEP = 5;
+
+/**
+ * Beim Moduswechsel die neue Leitgröße so wählen, dass das VT etwa gleich bleibt:
+ * VC → PC: Pinsp ≈ VT / C / (1 − e^(−Ti/τ));  PC → VC: VT ≈ aktuelles PC-Volumen.
+ */
+function matchModeSwitch(cur: VentSettings, nextMode: VentMode, p: PatientParams): VentSettings {
+  const next: VentSettings = { ...cur, mode: nextMode };
+  if (cur.mode === nextMode) return next;
+  if (nextMode === 'PC') {
+    const fill = 1 - Math.exp(-effectiveTi_s(cur) / Math.max(0.01, timeConstant_s(p)));
+    const pinsp = cur.vt_ml / p.compliance_ml_per_cmH2O / Math.max(0.05, fill);
+    next.pinsp_above_peep_cmH2O = clampNum(Math.round(pinsp), 4, 35);
+  } else {
+    next.vt_ml = clampNum(roundTo(steadyState(cur, p).vte_ml, 10), 200, 800);
+  }
+  return next;
+}
+
 const prefersReducedMotion = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 export default function VentilatorSimulator({ missions = false, initialPatient = 'gesund', initialMode = 'VC' }: VentilatorSimulatorProps) {
@@ -114,6 +141,8 @@ export default function VentilatorSimulator({ missions = false, initialPatient =
   const successRef = useRef(false);
   successRef.current = missionSuccess;
   const streakRef = useRef(0);
+  const playingRef = useRef(playing);
+  playingRef.current = playing;
 
   const engine = useMemo(() => new SweepEngine(() => inputsRef.current, 10), []);
   const monitorRef = useRef<WaveformMonitorHandle>(null);
@@ -147,10 +176,26 @@ export default function VentilatorSimulator({ missions = false, initialPatient =
   /* ----- Vorberechnung (Start, Pause, Missionswechsel) ----- */
   const prefill = useCallback(() => {
     const last = engine.prefill();
+    // engine.prefill() verwirft einen vorgemerkten Hold → UI synchron halten
+    setHoldState((h) => (h === 'armed' ? 'idle' : h));
     if (last) setMeasured(last);
     setPending(false);
     monitorRef.current?.draw();
-  }, [engine]);
+    // Angehaltene Kurven (z. B. prefers-reduced-motion): Mission auf dem
+    // eingeschwungenen Zustand prüfen – dieser entspricht beliebig vielen gleichen Atemzügen.
+    const ms = missionRef.current;
+    if (!playingRef.current && last && ms && !successRef.current) {
+      const ok = isMissionMet(last.metrics, last.settings, ms);
+      const next = ok ? REQUIRED_BREATHS : 0;
+      streakRef.current = next;
+      setMissionStreak(next);
+      if (ok) {
+        successRef.current = true;
+        setMissionSuccess(true);
+        solveSimChallenge(ms.id, ms.title);
+      }
+    }
+  }, [engine, solveSimChallenge]);
 
   useEffect(() => {
     prefill();
@@ -198,8 +243,24 @@ export default function VentilatorSimulator({ missions = false, initialPatient =
   };
 
   const updateSetting = <K extends keyof VentSettings>(key: K, value: VentSettings[K]) => {
-    const next = { ...settings, [key]: value };
+    let next: VentSettings = { ...settings, [key]: value };
+    if (key === 'mode') {
+      // In Missionen nicht automatisch nachführen (sonst wäre die Aufgabe per Umschalten lösbar)
+      next = mission ? next : matchModeSwitch(settings, value as VentMode, patient.params);
+    } else if (key === 'ti_s') {
+      // Pause ist Teil von Ti – mindestens 0,2 s Flowzeit erhalten
+      next.pause_s = Math.min(next.pause_s, Math.max(0, Math.round((next.ti_s - 0.2) * 10) / 10));
+    } else if (key === 'peep_cmH2O') {
+      next.pmax_cmH2O = Math.max(next.pmax_cmH2O, next.peep_cmH2O + PMAX_MIN_ABOVE_PEEP);
+    }
     applyChange(key, next, patient.params);
+    if (key === 'mode' && !mission && next.mode !== settings.mode) {
+      const note =
+        next.mode === 'PC'
+          ? `Pinsp wurde auf ${fmt(next.pinsp_above_peep_cmH2O)} cmH₂O über PEEP gesetzt, damit das VT etwa gleich bleibt (VT ≈ C · Pinsp · (1 − e^(−Ti/τ))).`
+          : `VT wurde auf ${fmt(next.vt_ml)} ml gesetzt – etwa das bisherige Volumen im PC-Modus.`;
+      setExplanation((e) => (e ? { ...e, points: [...e.points, note] } : e));
+    }
     setSettings(next);
   };
 
@@ -238,6 +299,7 @@ export default function VentilatorSimulator({ missions = false, initialPatient =
     setHoldState('idle');
     explainBase.current = null;
     inputsRef.current = { settings: m.settings, patient: m.patient };
+    missionRef.current = m;
     prefill();
   };
 
@@ -255,7 +317,9 @@ export default function VentilatorSimulator({ missions = false, initialPatient =
   const te = cycle - settings.ti_s;
   const tiTooLong = te < 0.3;
   const vc = settings.mode === 'VC';
-  const vcFlow = vc ? (settings.vt_ml / 1000 / Math.max(0.1, settings.ti_s - settings.pause_s)) * 60 : 0;
+  const vcFlow = vc ? vcFlow_L_s(settings) * 60 : 0;
+  const pauseMax = Math.max(0, Math.round((settings.ti_s - 0.2) * 10) / 10);
+  const pmaxMin = Math.max(15, settings.peep_cmH2O + PMAX_MIN_ABOVE_PEEP);
   const locked = !!mission;
   const tau = (patient.params.compliance_ml_per_cmH2O * patient.params.resistance_cmH2O_per_L_s) / 1000;
 
@@ -346,6 +410,7 @@ export default function VentilatorSimulator({ missions = false, initialPatient =
                 </>
               )}{' '}
               · ΔP = {fmt(holdResult.drivingPressure_cmH2O, 1)} cmH₂O
+              {holdResult.autoPeep_cmH2O >= 0.5 && <> (P<sub>plat</sub> − PEEP<sub>tot</sub>, inkl. intrinsischem PEEP {fmt(holdResult.autoPeep_cmH2O, 1)} cmH₂O)</>}
               <button type="button" className={s.linkBtn} onClick={() => setHoldState('idle')} aria-label="Hold-Ergebnis schließen">
                 <Icon name="x" size={14} />
               </button>
@@ -415,17 +480,21 @@ export default function VentilatorSimulator({ missions = false, initialPatient =
               <ControlSlider
                 short="Pause"
                 label="endinspiratorisch"
-                value={settings.pause_s}
+                value={Math.min(settings.pause_s, pauseMax)}
                 min={0}
-                max={Math.max(0, Math.round((settings.ti_s - 0.2) * 10) / 10)}
+                max={pauseMax}
                 step={0.1}
                 digits={1}
                 unit="s"
                 onChange={(v) => updateSetting('pause_s', v)}
-                hint="Teil von Ti – ermöglicht die Plateaumessung"
+                hint={
+                  effectivePause_s(settings) < settings.pause_s - 1e-9
+                    ? `Wird auf ${fmt(effectivePause_s(settings), 1)} s begrenzt (Ti begrenzt)`
+                    : 'Teil von Ti – ermöglicht die Plateaumessung'
+                }
               />
             )}
-            <ControlSlider short={<>P<sub>max</sub></>} label="Alarmgrenze" value={settings.pmax_cmH2O} min={15} max={60} step={1} unit="cmH₂O" onChange={(v) => updateSetting('pmax_cmH2O', v)} hint="Druckbegrenzung: Inspiration endet bei Erreichen" />
+            <ControlSlider short={<>P<sub>max</sub></>} label="Alarmgrenze" value={settings.pmax_cmH2O} min={pmaxMin} max={60} step={1} unit="cmH₂O" onChange={(v) => updateSetting('pmax_cmH2O', v)} hint="Druckbegrenzung: Inspiration endet bei Erreichen" />
           </div>
 
           {/* Patient */}
@@ -489,12 +558,12 @@ export default function VentilatorSimulator({ missions = false, initialPatient =
                   unit="cm"
                   disabled={locked}
                   onChange={(v) => setHeight(v, patient.sex)}
-                  hint={`Idealgewicht (PBW): ${fmt(patient.params.pbw_kg, 1)} kg`}
+                  hint={`Sollgewicht (PBW): ${fmt(patient.params.pbw_kg, 1)} kg`}
                 />
                 <div className={s.sexPick}>
                   <span className={s.subLabel}>Geschlecht (für PBW)</span>
                   <Segmented<'m' | 'w'>
-                    label="Geschlecht für Idealgewicht"
+                    label="Geschlecht für Sollgewicht"
                     value={patient.sex}
                     onChange={(v) => !locked && setHeight(patient.height_cm, v)}
                     options={[
@@ -553,6 +622,7 @@ export default function VentilatorSimulator({ missions = false, initialPatient =
               setPatient(presetPatient(initialPatient));
               setExplanation(null);
               explainBase.current = null;
+              setHoldState('idle');
               inputsRef.current = { settings: st, patient: PATIENT_PRESETS[initialPatient].params };
               prefill();
             }}

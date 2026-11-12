@@ -73,7 +73,8 @@
 .vText { color: var(--c-text-2); }
 .vText p { margin: 0 0 4px; }
 .vText p:last-child { margin: 0; }
-.footer { display: flex; justify-content: flex-end; margin-top: var(--sp-4); }
+.footer { display: flex; justify-content: flex-end; align-items: center; gap: var(--sp-3); flex-wrap: wrap; margin-top: var(--sp-4); }
+.checkHint { font-size: var(--fs-sm); color: var(--c-text-3); }
 .end { margin-top: var(--sp-5); }
 @keyframes flagPop { 0% { transform: scale(0.97); } 60% { transform: scale(1.02); } 100% { transform: scale(1); } }
 @keyframes vIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }

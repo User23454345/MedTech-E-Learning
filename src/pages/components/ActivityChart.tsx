@@ -40,7 +40,7 @@ export function ActivityChart({ activity, days = 14 }: { activity: Record<string
           <strong>{total}</strong> XP in {days} Tagen
         </span>
         <span>
-          <strong>{activeDays}</strong> aktive {activeDays === 1 ? 'Tag' : 'Tage'}
+          <strong>{activeDays}</strong> {activeDays === 1 ? 'aktiver Tag' : 'aktive Tage'}
         </span>
         <span className={s.readout} aria-live="polite">
           {hovered ? `${WEEKDAY.format(hovered.date)}, ${DATE.format(hovered.date)}: ${hovered.xp} XP` : ' '}

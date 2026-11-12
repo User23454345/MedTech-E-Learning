@@ -69,6 +69,15 @@ export interface DeviceDiagramProps {
   onHover: (id: VentComponentId | null) => void;
 }
 
+/** true bei Tastaturfokus (nicht bei Fokus durch Antippen/Klicken) */
+function isFocusVisible(el: Element): boolean {
+  try {
+    return el.matches(':focus-visible');
+  } catch {
+    return true;
+  }
+}
+
 function DeviceDiagramImpl({ selected, explored, highlightCategory, flow, showLabels, marks, quiz, onSelect, onHover }: DeviceDiagramProps) {
   const hs = (id: VentComponentId, children: ReactNode) => {
     const comp = COMPONENT_BY_ID[id];
@@ -103,9 +112,11 @@ function DeviceDiagramImpl({ selected, explored, highlightCategory, flow, showLa
         aria-pressed={quiz ? undefined : selected === id}
         onClick={() => onSelect(id)}
         onKeyDown={onKey}
-        onMouseEnter={() => onHover(id)}
-        onMouseLeave={() => onHover(null)}
-        onFocus={() => onHover(id)}
+        // Tooltip nur bei Maus-Hover bzw. Tastaturfokus – Touch löst kein „mouseleave“ aus
+        onPointerEnter={(e) => e.pointerType === 'mouse' && onHover(id)}
+        onPointerLeave={(e) => e.pointerType === 'mouse' && onHover(null)}
+        onPointerDown={(e) => e.pointerType !== 'mouse' && onHover(null)}
+        onFocus={(e) => isFocusVisible(e.currentTarget) && onHover(id)}
         onBlur={() => onHover(null)}
       >
         {geo.ringPath ? (

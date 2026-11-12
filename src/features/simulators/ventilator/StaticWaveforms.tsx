@@ -27,6 +27,8 @@ const PAD_T = 8;
 const PAD_B = 8;
 
 function niceStep(range: number): number {
+  // Schutz vor Endlosschleife bei flachem Kanal (range 0 → step 0)
+  if (!(range > 0) || !Number.isFinite(range)) return 1;
   const raw = range / 4;
   const mag = 10 ** Math.floor(Math.log10(raw));
   const n = raw / mag;
@@ -45,11 +47,17 @@ function scaleFor(key: Channel['key'], all: Sample[][]): { min: number; max: num
   if (key === 'flow') {
     const m = Math.max(Math.abs(lo), Math.abs(hi));
     const step = niceStep(2 * m);
-    const top = Math.ceil((m * 1.08) / step) * step;
+    const top = Math.max(step, Math.ceil((m * 1.08) / step) * step);
     return { min: -top, max: top, step };
   }
+  if (!Number.isFinite(lo) || !Number.isFinite(hi)) {
+    lo = 0;
+    hi = 1;
+  }
+  if (hi - lo < 1e-6) hi = lo + 1;
   const step = niceStep(hi - lo);
-  return { min: Math.floor(lo / step) * step, max: Math.ceil((hi * 1.08) / step) * step, step };
+  const min = Math.floor(lo / step) * step;
+  return { min, max: Math.max(min + step, Math.ceil((hi * 1.08) / step) * step), step };
 }
 
 function path(data: Sample[], key: Channel['key'], tMax: number, sc: { min: number; max: number }): string {

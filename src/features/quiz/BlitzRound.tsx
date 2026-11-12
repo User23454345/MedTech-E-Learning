@@ -31,9 +31,7 @@ interface Shown {
 function prepare(q: BlitzQuestion): Shown {
   if (q.kind === 'truefalse') return { q, order: [] };
   // Bei vielen Optionen: richtige + zufällige Distraktoren (max. 4)
-  const others = shuffle(
-    q.options.map((_, i) => i).filter((i) => i !== q.correct),
-  ).slice(0, MAX_OPTIONS - 1);
+  const others = shuffle(q.options.map((_, i) => i).filter((i) => i !== q.correct)).slice(0, MAX_OPTIONS - 1);
   return { q, order: shuffle([q.correct, ...others]) };
 }
 
@@ -48,11 +46,19 @@ export function BlitzRound({ pool, onExit }: { pool: Question[]; onExit?: () => 
   const [points, setPoints] = useState(0);
   const [answered, setAnswered] = useState(0);
   const [shown, setShown] = useState<Shown | null>(null);
-  const [flash, setFlash] = useState<{ ok: boolean; chosen: number | boolean } | null>(null);
+  const [flash, setFlash] = useState<{
+    ok: boolean;
+    chosen: number | boolean;
+  } | null>(null);
   const [bestAtStart, setBestAtStart] = useState(0);
   const [qn, setQn] = useState(0);
   const qAreaRef = useRef<HTMLDivElement>(null);
-  const [result, setResult] = useState<{ points: number; answered: number; record: boolean } | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [result, setResult] = useState<{
+    points: number;
+    answered: number;
+    record: boolean;
+  } | null>(null);
 
   const deck = useRef<number[]>([]);
   const pointsRef = useRef(0);
@@ -66,6 +72,16 @@ export function BlitzRound({ pool, onExit }: { pool: Question[]; onExit?: () => 
     setShown(idx === undefined ? null : prepare(usable[idx]));
     setQn((n) => n + 1);
   }, [usable]);
+
+  // Beim Start/Ende die Karte an den Seitenanfang holen (Timer & Punkte sichtbar, v. a. mobil)
+  useEffect(() => {
+    if (phase === 'start') return;
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    rootRef.current?.scrollIntoView({
+      behavior: reduce ? 'auto' : 'smooth',
+      block: 'start',
+    });
+  }, [phase, roundId]);
 
   // Fokus auf die erste Antwort der neuen Frage (Tastaturbedienung ohne Fokusverlust)
   useEffect(() => {
@@ -96,9 +112,13 @@ export function BlitzRound({ pool, onExit }: { pool: Question[]; onExit?: () => 
       finishedRounds.current.add(id);
       if (flashTimer.current) window.clearTimeout(flashTimer.current);
       const p = pointsRef.current;
-      setResult({ points: p, answered: answeredRef.current, record: p > bestAtStart && p > 0 });
+      setResult({
+        points: p,
+        answered: answeredRef.current,
+        record: p > bestAtStart && p > 0,
+      });
       setPhase('end');
-      recordBlitz(p);
+      recordBlitz(p, answeredRef.current);
     },
     [bestAtStart, recordBlitz],
   );
@@ -195,7 +215,9 @@ export function BlitzRound({ pool, onExit }: { pool: Question[]; onExit?: () => 
           </li>
           <li>
             <Icon name="hand" size={18} />
-            <span>Tastatur: <kbd>R</kbd>/<kbd>F</kbd> für Richtig/Falsch, <kbd>1</kbd>–<kbd>4</kbd> für Antworten.</span>
+            <span>
+              Tastatur: <kbd>R</kbd>/<kbd>F</kbd> für Richtig/Falsch, <kbd>1</kbd>–<kbd>4</kbd> für Antworten.
+            </span>
           </li>
         </ul>
         <div className={s.actions}>
@@ -216,50 +238,52 @@ export function BlitzRound({ pool, onExit }: { pool: Question[]; onExit?: () => 
   if (phase === 'end' && result) {
     const best = Math.max(state.blitz.best, result.points);
     return (
-      <Card className={cx(s.card, s.endCard)} role="status" aria-live="polite">
-        <div className={s.endScore}>
-          {result.record && <Burst />}
-          <span className={s.endPoints}>{result.points}</span>
-          <span className={s.endLabel}>{result.points === 1 ? 'Punkt' : 'Punkte'}</span>
-        </div>
-        {result.record ? (
-          <div className={s.record}>
-            <Icon name="trophy" size={18} /> Neuer Rekord!
+      <div ref={rootRef} className={s.anchor}>
+        <Card className={cx(s.card, s.endCard)} role="status" aria-live="polite">
+          <div className={s.endScore}>
+            {result.record && <Burst />}
+            <span className={s.endPoints}>{result.points}</span>
+            <span className={s.endLabel}>{result.points === 1 ? 'Punkt' : 'Punkte'}</span>
           </div>
-        ) : (
-          <p className={s.lead}>
-            {bestAtStart > 0 && result.points === bestAtStart
-              ? 'Rekord eingestellt – beim nächsten Mal knackst du ihn!'
-              : bestAtStart > 0
-                ? `Noch ${bestAtStart - result.points + 1} ${bestAtStart - result.points + 1 === 1 ? 'Punkt' : 'Punkte'} bis zum neuen Rekord.`
-                : 'Gute erste Runde!'}
-          </p>
-        )}
-        <dl className={s.endStats}>
-          <div>
-            <dt>Beantwortet</dt>
-            <dd>{result.answered}</dd>
-          </div>
-          <div>
-            <dt>Trefferquote</dt>
-            <dd>{result.answered ? Math.round((result.points / result.answered) * 100) : 0} %</dd>
-          </div>
-          <div>
-            <dt>Dein Rekord</dt>
-            <dd>{best}</dd>
-          </div>
-        </dl>
-        <div className={s.actions}>
-          <Button size="lg" variant="accent" icon="refresh" onClick={start}>
-            Nochmal
-          </Button>
-          {onExit && (
-            <Button size="lg" variant="secondary" onClick={onExit}>
-              Fertig
-            </Button>
+          {result.record ? (
+            <div className={s.record}>
+              <Icon name="trophy" size={18} /> Neuer Rekord!
+            </div>
+          ) : (
+            <p className={s.lead}>
+              {bestAtStart > 0 && result.points === bestAtStart
+                ? 'Rekord eingestellt – beim nächsten Mal knackst du ihn!'
+                : bestAtStart > 0
+                  ? `Noch ${bestAtStart - result.points + 1} ${bestAtStart - result.points + 1 === 1 ? 'Punkt' : 'Punkte'} bis zum neuen Rekord.`
+                  : 'Gute erste Runde!'}
+            </p>
           )}
-        </div>
-      </Card>
+          <dl className={s.endStats}>
+            <div>
+              <dt>Beantwortet</dt>
+              <dd>{result.answered}</dd>
+            </div>
+            <div>
+              <dt>Trefferquote</dt>
+              <dd>{result.answered ? Math.round((result.points / result.answered) * 100) : 0} %</dd>
+            </div>
+            <div>
+              <dt>Dein Rekord</dt>
+              <dd>{best}</dd>
+            </div>
+          </dl>
+          <div className={s.actions}>
+            <Button size="lg" variant="accent" icon="refresh" onClick={start}>
+              Nochmal
+            </Button>
+            {onExit && (
+              <Button size="lg" variant="secondary" onClick={onExit}>
+                Fertig
+              </Button>
+            )}
+          </div>
+        </Card>
+      </div>
     );
   }
 
@@ -274,85 +298,87 @@ export function BlitzRound({ pool, onExit }: { pool: Question[]; onExit?: () => 
   const urgent = secs <= 10;
 
   return (
-    <Card className={cx(s.card, s.runCard)}>
-      <div className={s.hud}>
-        <div className={cx(s.timer, urgent && s.urgent)} role="timer" aria-label={`${secs} Sekunden verbleibend`}>
-          <svg width="84" height="84" viewBox="0 0 84 84" aria-hidden>
-            <circle cx="42" cy="42" r={R} className={s.timerTrack} />
-            <circle cx="42" cy="42" r={R} className={s.timerFill} strokeDasharray={C} strokeDashoffset={C * (1 - remaining / DURATION_MS)} />
-          </svg>
-          <span className={s.timerNum} aria-hidden>
-            {secs}
-          </span>
-        </div>
-        <div className={s.race} aria-label={`Du: ${points} Punkte. Rekord-Tempo: ${Math.floor(ghost)} Punkte.`} role="group">
-          <div className={s.lane}>
-            <span className={s.laneLabel}>Du</span>
-            <div className={s.track}>
-              <div className={s.fillYou} style={{ width: `${(points / scaleMax) * 100}%` }} />
+    <div ref={rootRef} className={s.anchor}>
+      <Card className={cx(s.card, s.runCard)}>
+        <div className={s.hud}>
+          <div className={cx(s.timer, urgent && s.urgent)} role="timer" aria-label={`${secs} Sekunden verbleibend`}>
+            <svg width="84" height="84" viewBox="0 0 84 84" aria-hidden>
+              <circle cx="42" cy="42" r={R} className={s.timerTrack} />
+              <circle cx="42" cy="42" r={R} className={s.timerFill} strokeDasharray={C} strokeDashoffset={C * (1 - remaining / DURATION_MS)} />
+            </svg>
+            <span className={s.timerNum} aria-hidden>
+              {secs}
+            </span>
+          </div>
+          <div className={s.race} aria-label={`Du: ${points} Punkte. Rekord-Tempo: ${Math.floor(ghost)} Punkte.`} role="group">
+            <div className={s.lane}>
+              <span className={s.laneLabel}>Du</span>
+              <div className={s.track}>
+                <div className={s.fillYou} style={{ width: `${(points / scaleMax) * 100}%` }} />
+              </div>
+              <span className={s.laneVal}>{points}</span>
             </div>
-            <span className={s.laneVal}>{points}</span>
-          </div>
-          <div className={s.lane}>
-            <span className={s.laneLabel}>Dein Rekord</span>
-            <div className={s.track}>
-              {bestAtStart > 0 ? <div className={s.fillGhost} style={{ width: `${(ghost / scaleMax) * 100}%` }} /> : null}
+            <div className={s.lane}>
+              <span className={s.laneLabel}>Dein Rekord</span>
+              <div className={s.track}>
+                {bestAtStart > 0 ? <div className={s.fillGhost} style={{ width: `${(ghost / scaleMax) * 100}%` }} /> : null}
+              </div>
+              <span className={s.laneVal}>{bestAtStart > 0 ? bestAtStart : '–'}</span>
             </div>
-            <span className={s.laneVal}>{bestAtStart > 0 ? bestAtStart : '–'}</span>
-          </div>
-          <div className={s.raceNote}>
-            {answered} beantwortet
-            {bestAtStart > 0 && (points >= ghost ? ' · du liegst vor deinem Rekord-Tempo' : ' · hinter dem Rekord-Tempo')}
+            <div className={s.raceNote}>
+              {answered} beantwortet
+              {bestAtStart > 0 && (points >= ghost ? ' · du liegst vor deinem Rekord-Tempo' : ' · hinter dem Rekord-Tempo')}
+            </div>
           </div>
         </div>
-      </div>
 
-      {shown && (
-        <div key={qn} ref={qAreaRef} className={cx(s.qArea, flash && (flash.ok ? s.flashOk : s.flashBad))}>
-          <p className={s.prompt} id="blitz-prompt">
-            <InlineMd text={shown.q.prompt} />
-          </p>
-          {shown.q.kind === 'truefalse' ? (
-            <div className={s.tf} role="group" aria-labelledby="blitz-prompt">
-              {[true, false].map((v) => {
-                const isRight = shown.q.kind === 'truefalse' && shown.q.correct === v;
-                const st = flash ? (flash.chosen === v ? (flash.ok ? s.ok : s.bad) : isRight ? s.reveal : undefined) : undefined;
-                return (
-                  <button key={String(v)} type="button" className={cx(s.tfBtn, st)} onClick={() => answer(v)} aria-disabled={!!flash || undefined}>
-                    <Icon name={v ? 'check' : 'x'} size={22} strokeWidth={2.4} />
-                    {v ? 'Richtig' : 'Falsch'}
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            <div className={s.opts} role="group" aria-labelledby="blitz-prompt">
-              {shown.order.map((orig, i) => {
-                const isRight = shown.q.kind === 'single' && shown.q.correct === orig;
-                const st = flash ? (flash.chosen === orig ? (flash.ok ? s.ok : s.bad) : isRight ? s.reveal : undefined) : undefined;
-                return (
-                  <button key={orig} type="button" className={cx(s.opt, st)} onClick={() => answer(orig)} aria-disabled={!!flash || undefined}>
-                    <span className={s.key} aria-hidden>
-                      {i + 1}
-                    </span>
-                    <span>
-                      <InlineMd text={shown.q.kind === 'single' ? shown.q.options[orig] : ''} />
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-          <div className={s.flashMsg} role="status" aria-live="assertive">
-            {flash && (
-              <span className={flash.ok ? s.msgOk : s.msgBad}>
-                <Icon name={flash.ok ? 'check' : 'x'} size={18} strokeWidth={2.4} />
-                {flash.ok ? '+1 Richtig' : 'Falsch'}
-              </span>
+        {shown && (
+          <div key={qn} ref={qAreaRef} className={cx(s.qArea, flash && (flash.ok ? s.flashOk : s.flashBad))}>
+            <p className={s.prompt} id="blitz-prompt">
+              <InlineMd text={shown.q.prompt} />
+            </p>
+            {shown.q.kind === 'truefalse' ? (
+              <div className={s.tf} role="group" aria-labelledby="blitz-prompt">
+                {[true, false].map((v) => {
+                  const isRight = shown.q.kind === 'truefalse' && shown.q.correct === v;
+                  const st = flash ? (flash.chosen === v ? (flash.ok ? s.ok : s.bad) : isRight ? s.reveal : undefined) : undefined;
+                  return (
+                    <button key={String(v)} type="button" className={cx(s.tfBtn, st)} onClick={() => answer(v)} aria-disabled={!!flash || undefined}>
+                      <Icon name={v ? 'check' : 'x'} size={22} strokeWidth={2.4} />
+                      {v ? 'Richtig' : 'Falsch'}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className={s.opts} role="group" aria-labelledby="blitz-prompt">
+                {shown.order.map((orig, i) => {
+                  const isRight = shown.q.kind === 'single' && shown.q.correct === orig;
+                  const st = flash ? (flash.chosen === orig ? (flash.ok ? s.ok : s.bad) : isRight ? s.reveal : undefined) : undefined;
+                  return (
+                    <button key={orig} type="button" className={cx(s.opt, st)} onClick={() => answer(orig)} aria-disabled={!!flash || undefined}>
+                      <span className={s.key} aria-hidden>
+                        {i + 1}
+                      </span>
+                      <span>
+                        <InlineMd text={shown.q.kind === 'single' ? shown.q.options[orig] : ''} />
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             )}
+            <div className={s.flashMsg} role="status" aria-live="assertive">
+              {flash && (
+                <span className={flash.ok ? s.msgOk : s.msgBad}>
+                  <Icon name={flash.ok ? 'check' : 'x'} size={18} strokeWidth={2.4} />
+                  {flash.ok ? '+1 Richtig' : 'Falsch'}
+                </span>
+              )}
+            </div>
           </div>
-        </div>
-      )}
-    </Card>
+        )}
+      </Card>
+    </div>
   );
 }

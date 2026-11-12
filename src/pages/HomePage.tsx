@@ -11,6 +11,7 @@ import { ModuleCard } from './components/ModuleCard';
 import { SectionHeader } from './components/SectionHeader';
 import { EmptyState } from './components/EmptyState';
 import s from './HomePage.module.css';
+import { useDocumentTitle } from '@/lib/useDocumentTitle';
 
 const STEPS: { title: string; text: string; icon: IconName }[] = [
   { title: 'Grundlagen', text: 'Physik & Physiologie, die das Gerät erklärt.', icon: 'book' },
@@ -38,6 +39,7 @@ function greeting(): string {
 }
 
 export default function HomePage() {
+  useDocumentTitle();
   const { state, level, streak } = useProgress();
   const name = state.profile.name.trim();
 

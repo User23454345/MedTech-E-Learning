@@ -114,11 +114,15 @@ export default function VentilatorExplorer() {
     if (!tooltipId) return null;
     const [bx, by, bw, bh] = GEO[tooltipId].box;
     const below = by < 80;
+    const cx0 = (bx + bw / 2) / VIEW_W;
+    // am Rand nicht mittig ausrichten, sonst wird der Tooltip abgeschnitten
+    const align: 'start' | 'center' | 'end' = cx0 > 0.8 ? 'end' : cx0 < 0.2 ? 'start' : 'center';
     return {
       comp: COMPONENT_BY_ID[tooltipId],
-      left: `${((bx + bw / 2) / VIEW_W) * 100}%`,
+      left: `${cx0 * 100}%`,
       top: `${((below ? by + bh : by) / VIEW_H) * 100}%`,
       below,
+      align,
     };
   }, [tooltipId]);
 
@@ -208,30 +212,42 @@ export default function VentilatorExplorer() {
       {/* ---------- Hauptbereich ---------- */}
       <div className={s.layout}>
         <div className={cx(s.diagramCard, quizMode && s.diagramQuiz)}>
-          <div className={s.diagramWrap}>
-            <DeviceDiagram
-              selected={selected}
-              explored={explored}
-              highlightCategory={quizMode ? null : category}
-              flow={quizMode ? 'off' : flow}
-              showLabels={labels}
-              marks={quizMode ? quiz.marks : undefined}
-              quiz={quizMode}
-              onSelect={onDiagramSelect}
-              onHover={setHovered}
-            />
-            {tip && (
-              <div
-                className={cx(s.tooltip, tip.below && s.tooltipBelow)}
-                style={{ left: tip.left, top: tip.top }}
-                aria-hidden="true"
-              >
-                <span className={s.tipName}>{tip.comp.short}</span>
-                <span className={s.tipCat} style={{ '--cat': CATEGORY_BY_ID[tip.comp.category].color } as CSSProperties}>
-                  {CATEGORY_BY_ID[tip.comp.category].label}
-                </span>
-              </div>
-            )}
+          <p className={s.swipeHint}>
+            <Icon name="hand" size={14} /> Schema seitlich wischen, um alle Bauteile zu sehen
+          </p>
+          <div className={s.diagramScroll}>
+            <div className={s.diagramWrap}>
+              <DeviceDiagram
+                selected={selected}
+                explored={explored}
+                highlightCategory={quizMode ? null : category}
+                flow={quizMode ? 'off' : flow}
+                showLabels={labels}
+                marks={quizMode ? quiz.marks : undefined}
+                quiz={quizMode}
+                onSelect={onDiagramSelect}
+                onHover={setHovered}
+              />
+              {tip && (
+                <div
+                  className={cx(s.tooltip, tip.below && s.tooltipBelow, tip.align === 'end' && s.tooltipEnd, tip.align === 'start' && s.tooltipStart)}
+                  style={{ left: tip.left, top: tip.top }}
+                  aria-hidden="true"
+                >
+                  <span className={s.tipName}>{tip.comp.short}</span>
+                  <span
+                    className={s.tipCat}
+                    style={
+                      {
+                        '--cat': CATEGORY_BY_ID[tip.comp.category].color,
+                      } as CSSProperties
+                    }
+                  >
+                    {CATEGORY_BY_ID[tip.comp.category].label}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
           {pathIds && (
             <ol className={s.pathStrip} aria-label={flow === 'insp' ? 'Gasweg in der Inspiration' : 'Gasweg in der Exspiration'}>
@@ -286,8 +302,8 @@ function IntroPanel({ onStart }: { onStart: () => void }) {
       </span>
       <h3 className={s.introTitle}>Gerät erkunden</h3>
       <p>
-        Klicke oder tippe auf ein Bauteil im Schema – oder navigiere mit der <kbd>Tab</kbd>-Taste und bestätige mit <kbd>Enter</kbd>.
-        Zu jeder Komponente erfährst du, was sie macht, wie sie technisch funktioniert und welche Alarme bei Fehlern typisch sind.
+        Klicke oder tippe auf ein Bauteil im Schema – oder navigiere mit der <kbd>Tab</kbd>-Taste und bestätige mit <kbd>Enter</kbd>. Zu jeder Komponente
+        erfährst du, was sie macht, wie sie technisch funktioniert und welche Alarme bei Fehlern typisch sind.
       </p>
       <ul className={s.introList}>
         <li>
@@ -304,8 +320,8 @@ function IntroPanel({ onStart }: { onStart: () => void }) {
         Beim Gaseingang starten
       </Button>
       <p className={s.modelHint}>
-        <Icon name="info" size={14} /> Vereinfachtes, herstellerneutrales Schema. Aufbau und Bezeichnungen variieren je nach Gerät – maßgeblich ist
-        die Gebrauchsanweisung.
+        <Icon name="info" size={14} /> Vereinfachtes, herstellerneutrales Schema. Aufbau und Bezeichnungen variieren je nach Gerät – maßgeblich ist die
+        Gebrauchsanweisung.
       </p>
     </div>
   );
@@ -330,7 +346,11 @@ function QuizBar({ phase, round, score, targetName, lastCorrect, onNext, onResta
       <div className={cx(s.quizBar, s.quizDone)} role="status">
         <Icon name="trophy" size={20} />
         <span className={s.quizPrompt}>
-          Ergebnis: <strong>{score} / {QUIZ_ROUNDS}</strong> richtig ({pct} %)
+          Ergebnis:{' '}
+          <strong>
+            {score} / {QUIZ_ROUNDS}
+          </strong>{' '}
+          richtig ({pct} %)
         </span>
         <div className={s.quizActions}>
           <Button size="sm" icon="refresh" onClick={onRestart}>
@@ -377,7 +397,17 @@ function QuizBar({ phase, round, score, targetName, lastCorrect, onNext, onResta
   );
 }
 
-function QuizSide({ phase, score, lastCorrect, targetId }: { phase: 'ask' | 'feedback' | 'done'; score: number; lastCorrect: boolean | null; targetId: VentComponentId | undefined }) {
+function QuizSide({
+  phase,
+  score,
+  lastCorrect,
+  targetId,
+}: {
+  phase: 'ask' | 'feedback' | 'done';
+  score: number;
+  lastCorrect: boolean | null;
+  targetId: VentComponentId | undefined;
+}) {
   if (phase === 'done') {
     const ratio = score / QUIZ_ROUNDS;
     const msg =
@@ -419,8 +449,8 @@ function QuizSide({ phase, score, lastCorrect, targetId }: { phase: 'ask' | 'fee
       </span>
       <h3 className={s.introTitle}>Prüfungsmodus</h3>
       <p>
-        In {QUIZ_ROUNDS} Runden wird jeweils eine Komponente genannt. Finde sie im Schema – die Beschriftungen sind ausgeblendet. Pro Runde zählt
-        der erste Klick.
+        In {QUIZ_ROUNDS} Runden wird jeweils eine Komponente genannt. Finde sie im Schema – die Beschriftungen sind ausgeblendet. Pro Runde zählt der erste
+        Klick.
       </p>
     </div>
   );

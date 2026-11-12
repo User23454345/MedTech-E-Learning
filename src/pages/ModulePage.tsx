@@ -17,6 +17,7 @@ import {
 import { InlineMd } from '@/components/blocks/Markdown';
 import { NotFoundView } from './components/NotFoundView';
 import s from './ModulePage.module.css';
+import { useDocumentTitle } from '@/lib/useDocumentTitle';
 
 const KIND_ICON: Record<LessonKind, IconName> = {
   grundlagen: 'book',
@@ -40,6 +41,7 @@ type Status = 'completed' | 'current' | 'locked' | 'open';
 export default function ModulePage() {
   const { moduleId } = useParams();
   const module = getModule(moduleId);
+  useDocumentTitle(module ? module.title : 'Modul nicht gefunden');
 
   if (!module) {
     return (

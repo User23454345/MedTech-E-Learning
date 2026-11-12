@@ -396,6 +396,12 @@ a.pagerLink:hover {
   .article {
     max-width: none;
   }
+  /* Sticky „Inhalt“-Leiste (ca. 56 px) unter dem Header einrechnen */
+  .section,
+  .sectionTitle,
+  .endSection {
+    scroll-margin-top: calc(var(--header-h) + 72px);
+  }
 }
 @media (max-width: 560px) {
   .pager {

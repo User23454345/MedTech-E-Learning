@@ -152,6 +152,34 @@
 .diagramWrap {
   position: relative;
 }
+.diagramScroll {
+  min-width: 0;
+}
+.swipeHint {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--c-text-3);
+}
+/* Schmale Bildschirme: Schema nicht unter Lesbarkeit verkleinern, sondern horizontal scrollen */
+@container (max-width: 640px) {
+  .diagramScroll {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    margin: 0 calc(-1 * var(--sp-3));
+    padding: 0 var(--sp-3) var(--sp-2);
+  }
+  .diagramWrap {
+    min-width: 720px;
+  }
+  .swipeHint {
+    display: flex;
+  }
+}
 
 /* Tooltip */
 .tooltip {
@@ -172,6 +200,18 @@
 }
 .tooltipBelow {
   transform: translate(-50%, 8px);
+}
+.tooltipEnd {
+  transform: translate(calc(-100% + 16px), calc(-100% - 8px));
+}
+.tooltipEnd.tooltipBelow {
+  transform: translate(calc(-100% + 16px), 8px);
+}
+.tooltipStart {
+  transform: translate(-16px, calc(-100% - 8px));
+}
+.tooltipStart.tooltipBelow {
+  transform: translate(-16px, 8px);
 }
 .tipName {
   font-weight: 700;

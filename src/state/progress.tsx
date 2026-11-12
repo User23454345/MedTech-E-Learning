@@ -11,16 +11,28 @@ import {
   XP,
   dailyTasksFor,
   emptyDaily,
+  gameXp,
   initialState,
   lessonKey,
   levelFor,
   newlyEarnedBadges,
   streakDays,
   todayISO,
+  type BadgeContext,
   type LevelInfo,
   type ProgressState,
 } from '@/lib/gamification';
 import type { IconName } from '@/components/ui/Icon';
+import { AVAILABLE_MODULES } from '@/data/modules';
+
+/** Modulstruktur für modulbezogene Abzeichen (z. B. „Modul gemeistert“). */
+const BADGE_CONTEXT: BadgeContext = {
+  modules: AVAILABLE_MODULES.map((m) => ({
+    id: m.id,
+    lessonIds: m.lessons.filter((l) => l.kind !== 'pruefung').map((l) => l.id),
+    hasExam: m.lessons.some((l) => l.kind === 'pruefung') || !!m.exam,
+  })),
+};
 
 const STORAGE_KEY = 'medtech-academy:progress:v1';
 
@@ -38,7 +50,8 @@ function load(): ProgressState {
     if (!raw) return initialState();
     const parsed = JSON.parse(raw) as Partial<ProgressState>;
     // Vorwärtskompatibel mit Defaults zusammenführen
-    return { ...initialState(), ...parsed } as ProgressState;
+    const base = initialState();
+    return { ...base, ...parsed, answeredQuestions: parsed.answeredQuestions ?? base.answeredQuestions } as ProgressState;
   } catch {
     return initialState();
   }
@@ -64,8 +77,12 @@ export interface ProgressApi {
   completeLesson: (moduleId: string, lessonId: string, xp: number, title?: string) => void;
   isLessonCompleted: (moduleId: string, lessonId: string) => boolean;
 
-  /** Einzelne beantwortete Frage (Quizblock, Fallbeispiel …). Vergibt XP bei richtig. */
-  recordAnswer: (correct: boolean) => void;
+  /**
+   * Einzelne beantwortete Frage (Quizblock, Fallbeispiel …). Vergibt XP bei richtig.
+   * Mit `key` (z. B. `${contextId}::${questionId}`) wird nur der erste Versuch
+   * je Frage gewertet – Wiederholungen zählen weder für XP noch Statistik.
+   */
+  recordAnswer: (correct: boolean, key?: string) => void;
   /** Lernspiel beendet. score 0..1. Vergibt XP abhängig vom Score. */
   recordGame: (gameId: string, score: number, title?: string) => void;
   /** Abschlusstest. */
@@ -79,8 +96,12 @@ export interface ProgressApi {
   ) => void;
   /** Simulator-Mission gelöst (idempotent). */
   solveSimChallenge: (challengeId: string, title?: string) => void;
-  /** Blitzrunde beendet. */
-  recordBlitz: (points: number) => void;
+  /**
+   * Blitzrunde beendet. `points` = richtige Antworten; `answered` (optional) =
+   * Anzahl beantworteter Fragen – fließt in die Antwortstatistik und die
+   * Tagesaufgabe „Fragen richtig beantworten“ ein (ohne zusätzliche XP).
+   */
+  recordBlitz: (points: number, answered?: number) => void;
   /** Frei vergebene XP (z. B. Fallbeispiel gelöst). */
   awardXp: (amount: number, reason: string) => void;
 
@@ -162,7 +183,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         };
       }
       // Abzeichen
-      const earned = newlyEarnedBadges(s);
+      const earned = newlyEarnedBadges(s, BADGE_CONTEXT);
       if (earned.length) {
         const now = new Date().toISOString();
         s = { ...s, badges: { ...s.badges, ...Object.fromEntries(earned.map((b) => [b.id, now])) } };
@@ -222,18 +243,24 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       },
       isLessonCompleted: (moduleId, lessonId) => !!state.lessons[lessonKey(moduleId, lessonId)]?.completed,
 
-      recordAnswer: (correct) =>
+      recordAnswer: (correct, key) => {
+        if (key && stateRef.current.answeredQuestions[key]) return;
         commit(
           (s) => ({
             ...s,
             answers: { total: s.answers.total + 1, correct: s.answers.correct + (correct ? 1 : 0) },
+            answeredQuestions: key ? { ...s.answeredQuestions, [key]: true } : s.answeredQuestions,
             daily: { ...s.daily, quizCorrect: s.daily.quizCorrect + (correct ? 1 : 0) },
           }),
           correct ? XP.correctAnswer : 0,
-        ),
+        );
+      },
 
       recordGame: (gameId, score, title) => {
-        const xp = Math.max(5, Math.round(XP.gameBase * score));
+        const prevResult = stateRef.current.games[gameId];
+        const xp = gameXp(prevResult, score);
+        const pct = Math.round(score * 100);
+        const label = title ?? 'Lernspiel';
         commit(
           (s) => {
             const prev = s.games[gameId];
@@ -243,17 +270,26 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
                 ...s.games,
                 [gameId]: { plays: (prev?.plays ?? 0) + 1, bestScore: Math.max(prev?.bestScore ?? 0, score), lastAt: new Date().toISOString() },
               },
-              daily: { ...s.daily, games: s.daily.games + 1 },
+              // Nur sinnvolle Durchgänge zählen für die Tagesaufgaben
+              daily: score > 0 ? { ...s.daily, games: s.daily.games + 1 } : s.daily,
             };
           },
           xp,
-          title ? `${title} · ${Math.round(score * 100)} %` : `Lernspiel · ${Math.round(score * 100)} %`,
+          `${label} · ${pct} %`,
         );
+        if (xp === 0 && prevResult) {
+          notify({ kind: 'info', title: `${label} · ${pct} %`, message: 'Ergebnis gespeichert – XP gibt es bei Wiederholungen nur für einen neuen Bestwert.', icon: 'refresh' });
+        }
       },
 
       recordExam: (moduleId, score, passed, correctCount, topicScores, passXp) => {
-        const firstPass = passed && !stateRef.current.exams[moduleId]?.passed;
-        const xp = correctCount * XP.examPerCorrect + (firstPass ? passXp : 0);
+        const prevExam = stateRef.current.exams[moduleId];
+        const firstPass = passed && !prevExam?.passed;
+        const total = Object.values(topicScores).reduce((a, [, t]) => a + t, 0);
+        // XP pro richtiger Antwort nur für Verbesserung gegenüber dem bisherigen Bestwert
+        const prevBestCorrect = prevExam ? Math.round(prevExam.bestScore * total) : 0;
+        const xp = Math.max(0, correctCount - prevBestCorrect) * XP.examPerCorrect + (firstPass ? passXp : 0);
+        const firstAttempt = !prevExam;
         commit(
           (s) => {
             const prev = s.exams[moduleId];
@@ -270,13 +306,17 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
                   topicScores,
                 },
               },
-              answers: { total: s.answers.total + Object.values(topicScores).reduce((a, [, t]) => a + t, 0), correct: s.answers.correct + correctCount },
-              daily: { ...s.daily, quizCorrect: s.daily.quizCorrect + correctCount },
+              // Antwortstatistik/Tagesaufgabe nur beim ersten Versuch (kein Farming durch Wiederholen)
+              answers: firstAttempt ? { total: s.answers.total + total, correct: s.answers.correct + correctCount } : s.answers,
+              daily: firstAttempt ? { ...s.daily, quizCorrect: s.daily.quizCorrect + correctCount } : s.daily,
             };
           },
           xp,
           firstPass ? 'Abschlusstest bestanden!' : 'Abschlusstest ausgewertet',
         );
+        if (xp === 0 && prevExam) {
+          notify({ kind: 'info', title: 'Abschlusstest ausgewertet', message: 'Ergebnis gespeichert – XP gibt es bei Wiederholungen nur für einen neuen Bestwert.', icon: 'refresh' });
+        }
       },
 
       solveSimChallenge: (challengeId, title) => {
@@ -291,11 +331,24 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         );
       },
 
-      recordBlitz: (points) =>
+      recordBlitz: (points, answered) =>
         commit(
-          (s) => ({ ...s, blitz: { best: Math.max(s.blitz.best, points), plays: s.blitz.plays + 1 }, daily: { ...s.daily, games: s.daily.games + 1 } }),
+          (s) => ({
+            ...s,
+            blitz: { best: Math.max(s.blitz.best, points), plays: s.blitz.plays + 1 },
+            answers:
+              answered !== undefined
+                ? { total: s.answers.total + Math.max(answered, points), correct: s.answers.correct + points }
+                : s.answers,
+            daily: {
+              ...s.daily,
+              games: s.daily.games + (points > 0 ? 1 : 0),
+              quizCorrect: s.daily.quizCorrect + (answered !== undefined ? points : 0),
+              blitzBest: Math.max(s.daily.blitzBest ?? 0, points),
+            },
+          }),
           points * XP.blitzPerCorrect,
-          `Blitzrunde · ${points} Punkte`,
+          `Blitzrunde · ${points} ${points === 1 ? 'Punkt' : 'Punkte'}`,
         ),
 
       awardXp: (amount, reason) => commit((s) => s, amount, reason),

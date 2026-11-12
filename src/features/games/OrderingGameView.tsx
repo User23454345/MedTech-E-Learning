@@ -37,15 +37,22 @@ export function OrderingGameView({ game }: { game: OrderingGame }) {
 
   const finished = result !== null;
 
-  const move = (from: number, to: number) => {
-    if (finished || to < 0 || to >= n || from === to) return;
+  /**
+   * Verschiebt einen Schritt anhand seiner ID. Der Ausgangsindex wird im
+   * Updater aus dem aktuellen Stand ermittelt – so bleiben schnell
+   * aufeinanderfolgende (gebatchte) Pointer-Events konsistent.
+   */
+  const moveId = (id: string, to: number) => {
+    if (finished || to < 0 || to >= n) return;
     setOrder((o) => {
+      const from = o.indexOf(id);
+      if (from < 0 || from === to) return o;
       const next = o.slice();
-      const [it] = next.splice(from, 1);
-      next.splice(to, 0, it);
+      next.splice(from, 1);
+      next.splice(to, 0, id);
       return next;
     });
-    setMoved(order[from]);
+    setMoved(id);
     setMarks(null);
     setAnnounce(`Schritt auf Position ${to + 1} verschoben.`);
   };
@@ -90,8 +97,10 @@ export function OrderingGameView({ game }: { game: OrderingGame }) {
   };
   const onGripMove = (e: RPointerEvent<HTMLSpanElement>) => {
     if (!dragId || !listRef.current) return;
+    // DOM-Rechtecke spiegeln immer die zuletzt gerenderte Reihenfolge wider
     const items = Array.from(listRef.current.querySelectorAll<HTMLElement>('[data-step-id]'));
-    const from = order.indexOf(dragId);
+    const from = items.findIndex((el) => el.dataset.stepId === dragId);
+    if (from < 0) return;
     let to = from;
     items.forEach((el, i) => {
       const r = el.getBoundingClientRect();
@@ -99,7 +108,7 @@ export function OrderingGameView({ game }: { game: OrderingGame }) {
       if (i < from && e.clientY < mid) to = Math.min(to, i);
       if (i > from && e.clientY > mid) to = Math.max(to, i);
     });
-    if (to !== from) move(from, to);
+    if (to !== from) moveId(dragId, to);
   };
   const onGripUp = () => setDragId(null);
 
@@ -161,7 +170,7 @@ export function OrderingGameView({ game }: { game: OrderingGame }) {
                     className={s.arrow}
                     aria-label={`Schritt ${i + 1} nach oben`}
                     aria-disabled={i === 0 || undefined}
-                    onClick={() => move(i, i - 1)}
+                    onClick={() => moveId(id, i - 1)}
                   >
                     <Icon name="chevronDown" size={18} className={s.up} />
                   </button>
@@ -170,7 +179,7 @@ export function OrderingGameView({ game }: { game: OrderingGame }) {
                     className={s.arrow}
                     aria-label={`Schritt ${i + 1} nach unten`}
                     aria-disabled={i === n - 1 || undefined}
-                    onClick={() => move(i, i + 1)}
+                    onClick={() => moveId(id, i + 1)}
                   >
                     <Icon name="chevronDown" size={18} />
                   </button>

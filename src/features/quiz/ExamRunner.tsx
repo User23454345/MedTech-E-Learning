@@ -102,7 +102,7 @@ function ExamFlow({ module, exam }: { module: DeviceModule; exam: Exam }) {
   /* ---------------- Start ---------------- */
   if (phase === 'start') {
     return (
-      <div ref={rootRef}>
+      <div ref={rootRef} className={s.anchor}>
         <Card className={s.start}>
           <div className={s.startHero}>
             <span className={s.startIcon} aria-hidden>
@@ -152,7 +152,7 @@ function ExamFlow({ module, exam }: { module: DeviceModule; exam: Exam }) {
           <ul className={s.rules}>
             <li>Die Fragen werden bei jedem Versuch neu und ausgewogen über alle Themen gezogen.</li>
             <li>Du kannst frei zwischen den Fragen wechseln und Antworten bis zur Abgabe ändern.</li>
-            <li>Zahlenwerte dürfen mit Komma oder Punkt eingegeben werden.</li>
+            <li>Zahlenwerte dürfen mit Komma oder Punkt als Dezimaltrennzeichen eingegeben werden (ohne Tausenderpunkt).</li>
           </ul>
           <Button size="lg" icon="play" onClick={begin}>
             Test starten
@@ -165,7 +165,7 @@ function ExamFlow({ module, exam }: { module: DeviceModule; exam: Exam }) {
   /* ---------------- Ergebnis ---------------- */
   if (phase === 'result' && outcome) {
     return (
-      <div ref={rootRef}>
+      <div ref={rootRef} className={s.anchor}>
         <ExamResultView module={module} exam={exam} outcome={outcome} onRetry={begin} />
       </div>
     );
@@ -175,7 +175,7 @@ function ExamFlow({ module, exam }: { module: DeviceModule; exam: Exam }) {
   const cur = items[index];
   if (!cur) return null;
   return (
-    <div ref={rootRef} className={s.runner}>
+    <div ref={rootRef} className={cx(s.anchor, s.runner)}>
       <Card className={s.runCard}>
         <div className={s.runHead}>
           <div>

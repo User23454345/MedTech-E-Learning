@@ -98,16 +98,16 @@ Zum Aufwärmen: Was passiert im Gerät während **eines einzigen volumenkontroll
                 text: 'Sichtprüfung: Gerät, Netz- und Gasanschlüsse (O~2~/Druckluft), Prüfplakette bzw. Prüffristen, Zubehör vollständig und unbeschädigt.',
               },
               {
-                id: 'selbsttest',
-                text: 'Gerät einschalten und den Selbsttest gemäß Gebrauchsanweisung durchführen (inkl. Sensor- und Alarmprüfung).',
+                id: 'schlauch',
+                text: 'Patientenschlauchsystem mit Filter und Befeuchtung (aktiver Befeuchter ODER HME) nach Herstellerangabe aufbauen.',
               },
               {
-                id: 'schlauch',
-                text: 'Patientenschlauchsystem mit Filter und Befeuchtung anschließen und den Schlauchsystem-Test (Dichtheit, Compliance) durchführen.',
+                id: 'selbsttest',
+                text: 'Gerät einschalten und Selbsttest/Gerätecheck gemäß Gebrauchsanweisung durchführen (Sensoren, Alarme, Dichtheit und Compliance des Schlauchsystems).',
               },
               {
                 id: 'pbw',
-                text: 'Patientendaten eingeben: Geschlecht und Körpergröße zur Berechnung des Standardkörpergewichts (PBW).',
+                text: 'Patientendaten eingeben: Geschlecht und Körpergröße zur Berechnung des Sollgewichts (PBW).',
               },
               {
                 id: 'parameter',
@@ -126,7 +126,7 @@ Zum Aufwärmen: Was passiert im Gerät während **eines einzigen volumenkontroll
                 text: 'Kontrolle: Thoraxexkursion, Auskultation, Messwerte (V~Te~, Drücke, Kapnografie), SpO~2~ und Blutgasanalyse nach etwa 20–30 Minuten.',
               },
             ],
-            explanation: `Die Reihenfolge folgt einem einfachen Prinzip: **erst das Gerät, dann das System, dann der Patient**. Der Selbsttest und der Schlauchsystem-Test müssen vor dem Anschluss erfolgen, denn nur so kann das Gerät Leckagen und die Schlauchcompliance kompensieren. Die Körpergröße wird vor der Parametereinstellung erfasst, weil sich das Tidalvolumen am **Standardkörpergewicht** orientiert. Alarmgrenzen werden vor dem Anschluss gesetzt – ein Gerät, das „stumm“ beatmet, ist ein Sicherheitsrisiko. Details sind immer geräteabhängig: Maßgeblich sind Gebrauchsanweisung und lokale SOPs.`,
+            explanation: `Die Reihenfolge folgt einem einfachen Prinzip: **erst das Gerät, dann das System, dann der Patient**. Das Schlauchsystem wird vor dem Selbsttest aufgebaut, und der Selbsttest inklusive Schlauchsystem-Test muss vor dem Anschluss erfolgen – nur so kann das Gerät Leckagen erkennen und die Schlauchcompliance kompensieren. Die Körpergröße wird vor der Parametereinstellung erfasst, weil sich das Tidalvolumen am **Sollgewicht** orientiert. Alarmgrenzen werden vor dem Anschluss gesetzt – ein Gerät, das „stumm“ beatmet, ist ein Sicherheitsrisiko. Die genaue Reihenfolge (z. B. wann Patientendaten eingegeben werden) ist geräteabhängig: Maßgeblich sind Gebrauchsanweisung und lokale SOPs.`,
           },
         },
         {
@@ -284,7 +284,7 @@ Zum Aufwärmen: Was passiert im Gerät während **eines einzigen volumenkontroll
                 value: 'Deutliche Wasseransammlung im Exspirationsschenkel',
                 isFault: true,
                 explanation:
-                  'Plausibel: Kondenswasser kann den Querschnitt einengen, den Widerstand erhöhen und Fehltriggerung verursachen. Wasser aus dem Schlauch entfernen – niemals in Richtung Patient laufen lassen.',
+                  'Weist auf ein Problem hin: Kondenswasser im Exspirationsschenkel behindert die Ausatmung, erzeugt Flow-Oszillationen und kann Autotriggerung (und damit Pressen/Asynchronie) auslösen. Den inspiratorischen Spitzendruck erhöht es direkt kaum. Wasser entfernen – niemals in Richtung Patient laufen lassen.',
               },
               {
                 id: 'peep',
@@ -347,7 +347,7 @@ Zum Aufwärmen: Was passiert im Gerät während **eines einzigen volumenkontroll
             setting: 'Interdisziplinäre Intensivstation, Spätdienst',
             presentation: `Herr K., 52 Jahre, **180 cm**, 98 kg, wird seit gestern wegen eines **ARDS bei Pneumonie** volumenkontrolliert beatmet. Die Einstellung stammt aus dem Notfall: V~T~ 600 ml, f 18/min, PEEP 10 cmH~2~O, F~I~O~2~ 0,6. Bei der inspiratorischen Pause misst du einen **Plateaudruck von 33 cmH~2~O**.
 
-Sein Standardkörpergewicht beträgt 50 + 0,91 · (180 − 152,4) ≈ **75 kg**. Das eingestellte Volumen entspricht also etwa 8 ml/kg PBW.`,
+Sein Sollgewicht beträgt 50 + 0,91 · (180 − 152,4) ≈ **75 kg**. Das eingestellte Volumen entspricht also etwa 8 ml/kg PBW.`,
             vitals: [
               { label: 'SpO~2~', value: '90 %', status: 'warn' },
               { label: 'P~plat~', value: '33 cmH~2~O', status: 'alarm' },
@@ -395,7 +395,7 @@ Sein Standardkörpergewicht beträgt 50 + 0,91 · (180 − 152,4) ≈ **75 kg**.
                     text: 'Atemfrequenz moderat erhöhen (z. B. auf 22–24/min) und auf Air Trapping achten',
                     correct: true,
                     feedback:
-                      'Richtig. Eine höhere Frequenz kompensiert einen Teil des Minutenvolumens (450 ml · 24/min ≈ 10,8 L/min). Dabei die Flowkurve beobachten: Der exspiratorische Flow muss weiterhin die Nulllinie erreichen.',
+                      'Richtig. Mit 24/min ist das Minutenvolumen wiederhergestellt (450 ml · 24/min ≈ 10,8 L/min). Wegen des gleichbleibenden Totraums bleibt die alveoläre Ventilation trotzdem etwas geringer als vorher – ein leichter P~a~CO~2~-Anstieg ist möglich. Dabei die Flowkurve beobachten: Der exspiratorische Flow muss weiterhin die Nulllinie erreichen.',
                   },
                   {
                     text: 'Das Tidalvolumen sofort wieder auf 600 ml erhöhen',
@@ -429,7 +429,7 @@ Sein Standardkörpergewicht beträgt 50 + 0,91 · (180 − 152,4) ≈ **75 kg**.
                 ],
               },
             ],
-            debrief: `**Take-home-Message:** Bei ARDS orientiert sich das Tidalvolumen am **Standardkörpergewicht** (≈ 6 ml/kg PBW). Ziele sind P~plat~ ≤ 30 cmH~2~O und ein möglichst niedriger Driving Pressure (≤ 15 cmH~2~O). Ein sinkendes Minutenvolumen wird über die Frequenz ausgeglichen; eine moderate Hyperkapnie kann toleriert werden. Grundlage sind die ARDSNet-Studie (2000), die Analyse von Amato et al. (2015) und die S3-Leitlinie „Invasive Beatmung“.`,
+            debrief: `**Take-home-Message:** Bei ARDS orientiert sich das Tidalvolumen am **Sollgewicht** (≈ 6 ml/kg PBW). Ziele sind P~plat~ ≤ 30 cmH~2~O und ein möglichst niedriger Driving Pressure (≤ 15 cmH~2~O). Ein sinkendes Minutenvolumen wird über die Frequenz ausgeglichen; eine moderate Hyperkapnie kann toleriert werden. Grundlage sind die ARDSNet-Studie (2000), die Analyse von Amato et al. (2015) und die S3-Leitlinie „Invasive Beatmung“.`,
           },
         },
         {
@@ -440,7 +440,9 @@ Sein Standardkörpergewicht beträgt 50 + 0,91 · (180 − 152,4) ≈ **75 kg**.
             setting: 'Internistische Intensivstation, Nachtdienst',
             presentation: `Frau M., 67 Jahre, mit bekannter schwerer COPD, wird nach einer Exazerbation volumenkontrolliert beatmet: V~T~ 420 ml, **f 24/min, I:E 1:2**, PEEP 5 cmH~2~O. Der Blutdruck fällt seit einer Stunde langsam ab. In der Flowkurve fällt dir auf: **Der exspiratorische Flow erreicht vor dem nächsten Atemzug nicht die Nulllinie.**
 
-Bei einer Resistance von ca. 25 cmH~2~O/(L/s) und einer Compliance von ca. 50 ml/cmH~2~O beträgt die Zeitkonstante τ = R · C ≈ 1,25 s.`,
+Bei einer Resistance von ca. 25 cmH~2~O/(L/s) und einer Compliance von ca. 50 ml/cmH~2~O beträgt die Zeitkonstante τ = R · C ≈ 1,25 s.
+
+*Modellhinweis:* Das Ein-Kompartiment-Modell würde bei diesen Werten nur einen Auto-PEEP von etwa 3 cmH~2~O vorhersagen. Real liegt der Auto-PEEP bei COPD durch exspiratorische Flusslimitierung (Kollaps kleiner Atemwege) und inhomogene Zeitkonstanten oft deutlich höher, als das Ein-Kompartiment-Modell vorhersagt.`,
             vitals: [
               { label: 'RR', value: '88/50 mmHg', status: 'warn' },
               { label: 'HF', value: '118/min', status: 'warn' },
@@ -569,10 +571,10 @@ Bei einer Resistance von ca. 25 cmH~2~O/(L/s) und einer Compliance von ca. 50 ml
                     text: 'E – Equipment: Fehler im Beatmungsgerät',
                     correct: false,
                     feedback:
-                      'Unwahrscheinlich. Der Patient ist bereits vom Gerät getrennt, und auch die Beutelbeatmung ist schwergängig. Das Problem liegt also patientenseitig – im Tubus oder in der Lunge.',
+                      'Unwahrscheinlich. Der Patient ist bereits vom Gerät getrennt, und auch die Beutelbeatmung ist schwergängig. Das Problem liegt also zwischen Beutel und Lunge – im Tubus, in der Lunge oder in noch angeschlossenem Zubehör (z. B. durchnässter HME/Filter, der deshalb mit entfernt werden sollte).',
                   },
                   {
-                    text: 'S – Stacked Breaths (Auto-PEEP)',
+                    text: 'S – Stacking (Stacked Breaths, Auto-PEEP)',
                     correct: false,
                     feedback:
                       'Weniger wahrscheinlich. Air Trapping entwickelt sich meist über mehrere Atemzüge und erklärt keinen Absaugkatheter, der sich nicht vorschieben lässt.',
@@ -599,11 +601,11 @@ Bei einer Resistance von ca. 25 cmH~2~O/(L/s) und einer Compliance von ca. 50 ml
             ],
             debrief: `**Take-home-Message:** Bei plötzlicher Verschlechterung eines beatmeten Patienten hilft das **DOPES**-Schema:
 
-- **D**isplacement – Tubusdislokation (z. B. Extubation, einseitige Intubation)
-- **O**bstruction – Verlegung von Tubus oder Atemwegen (Sekret, Knick, Bronchospasmus)
-- **P**neumothorax – v. a. Spannungspneumothorax
-- **E**quipment – Gerät, Schlauchsystem, Gasversorgung
-- **S**tacked Breaths – Air Trapping / Auto-PEEP
+- **D** – Dislokation (Displacement): Tubusdislokation (z. B. Extubation, einseitige Intubation)
+- **O** – Obstruktion (Obstruction): Verlegung von Tubus oder Atemwegen (Sekret, Knick, Bronchospasmus)
+- **P** – Pneumothorax: v. a. Spannungspneumothorax
+- **E** – Equipment: Gerät, Schlauchsystem, Gasversorgung, Filter/HME
+- **S** – Stacking (Stacked Breaths): Air Trapping / Auto-PEEP
 
 Bei unklarer Ursache gilt: **Patient vom Gerät trennen und manuell mit 100 % O~2~ beatmen.** Ein Beatmungsbeutel mit Maske gehört deshalb an jeden Beatmungsplatz.`,
           },
@@ -687,14 +689,14 @@ Bei unklarer Ursache gilt: **Patient vom Gerät trennen und manuell mit 100 % O~
               kind: 'multiple',
               prompt: 'Wofür stehen Buchstaben des DOPES-Schemas? (Mehrere Antworten richtig)',
               options: [
-                'D – Displacement (Tubusdislokation)',
-                'O – Obstruction (Verlegung)',
+                'D – Dislokation (Displacement) des Tubus',
+                'O – Obstruktion (Obstruction), z. B. Verlegung durch Sekret',
                 'P – PEEP zu niedrig',
                 'E – Equipment (Gerät/Material)',
               ],
               correct: [0, 1, 3],
               explanation:
-                'DOPES steht für Displacement, Obstruction, Pneumothorax, Equipment und Stacked Breaths. „P“ steht für **Pneumothorax** – ein Spannungspneumothorax ist eine lebensbedrohliche Ursache plötzlicher Verschlechterung, ein zu niedriger PEEP dagegen nicht.',
+                'DOPES steht für Dislokation (Displacement), Obstruktion (Obstruction), Pneumothorax, Equipment und Stacking (Stacked Breaths, Auto-PEEP). „P“ steht für **Pneumothorax** – ein Spannungspneumothorax ist eine lebensbedrohliche Ursache plötzlicher Verschlechterung, ein zu niedriger PEEP dagegen nicht.',
               topic: 'Alarme & Sicherheit',
               difficulty: 1,
             },

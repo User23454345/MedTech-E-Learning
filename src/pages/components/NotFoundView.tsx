@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { ButtonLink, type IconName, Icon } from '@/components/ui';
 import s from './NotFoundView.module.css';
+import { useDocumentTitle } from '@/lib/useDocumentTitle';
 
 /** Freundliche Hinweisseite (404, unbekanntes Modul, Modul in Vorbereitung …). */
 export function NotFoundView({
@@ -16,6 +17,7 @@ export function NotFoundView({
   children?: ReactNode;
   actions?: ReactNode;
 }) {
+  useDocumentTitle(title);
   return (
     <div className="container">
       <div className={s.box}>

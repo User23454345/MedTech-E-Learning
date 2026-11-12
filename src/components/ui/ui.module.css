@@ -76,7 +76,7 @@
 .ring { position: relative; display: inline-grid; place-items: center; }
 .ring svg { transform: rotate(-90deg); }
 .ringTrack { stroke: var(--c-surface-3); }
-.ringFill { stroke: url(#ringGrad); transition: stroke-dashoffset var(--dur-slow) var(--ease-out); }
+.ringFill { transition: stroke-dashoffset var(--dur-slow) var(--ease-out); }
 .ringLabel { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 700; font-size: var(--fs-sm); }
 
 /* ---------- Chip / Tag ---------- */

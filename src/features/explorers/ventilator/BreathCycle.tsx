@@ -3,22 +3,10 @@
  * Atemhub Schritt für Schritt – Ventile, Gasfluss, Lunge, Druck und
  * synchronisierte Kurven aus dem Einkompartimentmodell.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Button, Icon, Segmented, cx } from '@/components/ui';
 import { Markdown, renderInline } from '@/components/blocks/Markdown';
-import {
-  CYCLE,
-  DRIVING_P,
-  EXP_PEAK_FLOW_LMIN,
-  MODEL,
-  PHASES,
-  P_PEAK,
-  P_PLAT,
-  TAU,
-  phaseAt,
-  sampleCycle,
-  stateAt,
-} from './breathModel';
+import { CYCLE, DRIVING_P, EXP_PEAK_FLOW_LMIN, MODEL, PHASES, P_PEAK, P_PLAT, TAU, phaseAt, sampleCycle, stateAt } from './breathModel';
 import { PHASE_TEXT, VALVE_LABEL, type ValveState } from './breathPhases';
 import { BreathSchematic } from './BreathSchematic';
 import { MiniCurve } from './MiniCurve';
@@ -40,10 +28,15 @@ function usePrefersReducedMotion() {
   return reduced;
 }
 
-const fmt = (n: number, d = 0) => n.toLocaleString('de-DE', { minimumFractionDigits: d, maximumFractionDigits: d });
+const fmt = (n: number, d = 0) =>
+  n.toLocaleString('de-DE', {
+    minimumFractionDigits: d,
+    maximumFractionDigits: d,
+  });
 
 export default function BreathCycle() {
   const reduced = usePrefersReducedMotion();
+  const titleId = useId();
   /** Absolute Zeit (über mehrere Zyklen), damit die Gasbewegung stetig bleibt */
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -186,36 +179,7 @@ export default function BreathCycle() {
           />
         </div>
 
-        <section className={s.explain} aria-live="polite" aria-labelledby="bc-phase-title">
-          <header className={s.explainHead}>
-            <span className={s.explainNum}>{phase.num}</span>
-            <div>
-              <span className={s.explainKicker}>Phase {phase.num} von 5</span>
-              <h3 id="bc-phase-title" className={s.explainTitle}>
-                {phase.title}
-              </h3>
-            </div>
-          </header>
-          <dl className={s.facts}>
-            <Fact label="Inspirationsventil" state={text.inspValve} />
-            <Fact label="Exspirationsventil" state={text.expValve} />
-            <div className={s.fact}>
-              <dt>Flow</dt>
-              <dd>{renderInline(text.flowDir)}</dd>
-            </div>
-            <div className={s.fact}>
-              <dt>Druck</dt>
-              <dd>{renderInline(text.pressure)}</dd>
-            </div>
-          </dl>
-          <Markdown md={text.body} className={s.explainBody} />
-          {text.note && (
-            <p className={s.note}>
-              <Icon name="lightbulb" size={15} />
-              <span>{renderInline(text.note)}</span>
-            </p>
-          )}
-        </section>
+        <PhaseExplanation phase={phase} titleId={titleId} />
       </div>
 
       {/* ---------- Kurven ---------- */}
@@ -228,7 +192,11 @@ export default function BreathCycle() {
           max={25}
           ticks={[0, 10, 20]}
           color="var(--c-wave-pressure)"
-          label={<>Druck P<sub>aw</sub></>}
+          label={
+            <>
+              Druck P<sub>aw</sub>
+            </>
+          }
           unit="cmH₂O"
           value={st.paw}
           t={t}
@@ -268,34 +236,82 @@ export default function BreathCycle() {
         </p>
       </div>
 
-      {/* ---------- Parameter ---------- */}
-      <div className={s.params}>
-        <div className={s.paramGrid}>
-          <Param label="V~T~" value={`${MODEL.vtMl} ml`} />
-          <Param label="Flow" value={`${MODEL.flowLmin} L/min`} />
-          <Param label="R" value={`${MODEL.r} cmH~2~O/(L/s)`} />
-          <Param label="C" value={`${MODEL.cMl} ml/cmH~2~O`} />
-          <Param label="PEEP" value={`${MODEL.peep} cmH~2~O`} />
-          <Param label="Pause" value={`${fmt(MODEL.pause, 1)} s`} />
-          <Param label="P~peak~" value={`${fmt(P_PEAK)} cmH~2~O`} accent />
-          <Param label="P~plat~" value={`${fmt(P_PLAT)} cmH~2~O`} accent />
-          <Param label="ΔP" value={`${fmt(DRIVING_P)} cmH~2~O`} accent />
-          <Param label="τ = R · C" value={`${fmt(TAU, 1)} s`} accent />
-          <Param label="V̇~exsp,max~" value={`${fmt(EXP_PEAK_FLOW_LMIN)} L/min`} accent />
-          <Param label="f / I:E" value={`${MODEL.rate}/min · 1:${fmt((CYCLE - (PHASES[2].end - PHASES[1].start)) / (PHASES[2].end - PHASES[1].start), 1)}`} accent />
-        </div>
-        <p className={s.modelNote}>
-          <Icon name="info" size={14} />
-          <span>
-            Vereinfachtes Einkompartimentmodell (P<sub>aw</sub> = PEEP + V/C + R · V̇) mit festen Parametern. Echte Lungen sind inhomogen,
-            Resistance und Compliance ändern sich mit Volumen und Flow. Geräteeinstellungen stets nach ärztlicher Anordnung,
-            Herstellerangaben und lokalen Standards.
-          </span>
-        </p>
-      </div>
+      <ParamsSection />
     </div>
   );
 }
+
+/** Erklärung zur aktuellen Phase – memoisiert, damit sie nicht in jedem Animationsframe neu geparst wird */
+const PhaseExplanation = memo(function PhaseExplanation({ phase, titleId }: { phase: (typeof PHASES)[number]; titleId: string }) {
+  const text = PHASE_TEXT[phase.id];
+  return (
+    <section className={s.explain} aria-live="polite" aria-labelledby={titleId}>
+      <header className={s.explainHead}>
+        <span className={s.explainNum}>{phase.num}</span>
+        <div>
+          <span className={s.explainKicker}>
+            Phase {phase.num} von {PHASES.length}
+          </span>
+          <h3 id={titleId} className={s.explainTitle}>
+            {phase.title}
+          </h3>
+        </div>
+      </header>
+      <dl className={s.facts}>
+        <Fact label="Inspirationsventil" state={text.inspValve} />
+        <Fact label="Exspirationsventil" state={text.expValve} />
+        <div className={s.fact}>
+          <dt>Flow</dt>
+          <dd>{renderInline(text.flowDir)}</dd>
+        </div>
+        <div className={s.fact}>
+          <dt>Druck</dt>
+          <dd>{renderInline(text.pressure)}</dd>
+        </div>
+      </dl>
+      <Markdown md={text.body} className={s.explainBody} />
+      {text.note && (
+        <p className={s.note}>
+          <Icon name="lightbulb" size={15} />
+          <span>{renderInline(text.note)}</span>
+        </p>
+      )}
+    </section>
+  );
+});
+
+/** Statische Parameterübersicht (ändert sich nie) */
+const ParamsSection = memo(function ParamsSection() {
+  return (
+    <div className={s.params}>
+      <div className={s.paramGrid}>
+        <Param label="V~T~" value={`${MODEL.vtMl} ml`} />
+        <Param label="Flow" value={`${MODEL.flowLmin} L/min`} />
+        <Param label="R" value={`${MODEL.r} cmH~2~O/(L/s)`} />
+        <Param label="C" value={`${MODEL.cMl} ml/cmH~2~O`} />
+        <Param label="PEEP" value={`${MODEL.peep} cmH~2~O`} />
+        <Param label="Pause" value={`${fmt(MODEL.pause, 1)} s`} />
+        <Param label="P~peak~" value={`${fmt(P_PEAK)} cmH~2~O`} accent />
+        <Param label="P~plat~" value={`${fmt(P_PLAT)} cmH~2~O`} accent />
+        <Param label="ΔP" value={`${fmt(DRIVING_P)} cmH~2~O`} accent />
+        <Param label="τ = R · C" value={`${fmt(TAU, 1)} s`} accent />
+        <Param label="V̇~exsp,max~" value={`${fmt(EXP_PEAK_FLOW_LMIN)} L/min`} accent />
+        <Param
+          label="f / I:E"
+          value={`${MODEL.rate}/min · 1:${fmt((CYCLE - (PHASES[2].end - PHASES[1].start)) / (PHASES[2].end - PHASES[1].start), 1)}`}
+          accent
+        />
+      </div>
+      <p className={s.modelNote}>
+        <Icon name="info" size={14} />
+        <span>
+          Vereinfachtes Einkompartimentmodell (P<sub>aw</sub> = PEEP + V/C + R · V̇) mit festen Parametern. Echte Lungen sind inhomogen, Resistance und
+          Compliance ändern sich mit Volumen und Flow. Geräteeinstellungen stets nach ärztlicher Anordnung, Herstellerangaben und lokalen Standards.
+        </span>
+      </p>
+    </div>
+  );
+});
 
 function Fact({ label, state }: { label: string; state: ValveState }) {
   return (

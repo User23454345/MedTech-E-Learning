@@ -254,7 +254,7 @@ export const VENT_COMPONENTS: VentComponent[] = [
     how:
       'Die Blockmanschette (**Cuff**) des Tubus dichtet die Trachea ab und ermöglicht Überdruckbeatmung. Vereinfacht verhält sich das respiratorische System wie ein Widerstand R (Atemwege + Tubus) in Reihe mit einer Dehnbarkeit C (Lunge + Thoraxwand): P~aw~ = PEEP + V/C + R · V̇. Beatmete Erwachsene haben typischerweise eine Compliance von ca. 50–100 ml/cmH~2~O, im ARDS oft < 40 ml/cmH~2~O. Der Tubus trägt erheblich zur Resistance bei – je kleiner sein Innendurchmesser, desto höher.',
     why:
-      'Lungenprotektive Beatmung: V~T~ ≈ 6 ml/kg Standardkörpergewicht (PBW), Plateaudruck ≤ 30 cmH~2~O, Driving Pressure ΔP = P~plat~ − PEEP möglichst ≤ 15 cmH~2~O. Konkrete Einstellungen immer nach ärztlicher Anordnung und lokalen Standards.',
+      'Lungenprotektive Beatmung: V~T~ ≈ 6 ml/kg Sollgewicht (PBW), Plateaudruck ≤ 30 cmH~2~O, Driving Pressure ΔP = P~plat~ − PEEP möglichst ≤ 15 cmH~2~O. Konkrete Einstellungen immer nach ärztlicher Anordnung und lokalen Standards.',
     failure:
       'Tubusdislokation, Cuff-Leck, Sekretverlegung oder Abknicken: Alarme „Atemwegsdruck hoch“, „Tidalvolumen/Minutenvolumen niedrig“, „Leckage“. Bei unklarer Lage: Patient:in zuerst manuell beatmen und Atemweg prüfen.',
     term: '**Compliance C** (ml/cmH~2~O), **Resistance R** (cmH~2~O/(L/s)), Cuff',
@@ -288,7 +288,7 @@ export const VENT_COMPONENTS: VentComponent[] = [
       'Der PEEP hält Alveolen offen und verbessert die Oxygenierung. Fällt das Ventil aus, droht entweder ein PEEP-Verlust (Derekrutierung, Hypoxämie) oder – bei blockiertem Ventil – eine behinderte Ausatmung mit gefährlichem Druckanstieg.',
     failure:
       'Alarme: „PEEP hoch/niedrig“, „Atemwegsdruck hoch“, „Exspirationsventil-Fehler“. Häufige Ursache nach der Aufbereitung: falsch montierte Membran – daher immer den Selbsttest durchführen.',
-    term: '**PEEP** (positive end-exspiratory pressure), Membranventil',
+    term: '**PEEP** (positive end-expiratory pressure), Membranventil',
   },
   {
     id: 'exp-flow-sensor',

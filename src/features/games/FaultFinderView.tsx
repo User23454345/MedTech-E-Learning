@@ -48,8 +48,11 @@ export function FaultFinderView({ game }: { game: FaultFinderGame }) {
     setFlagged((f) => (f.includes(id) ? f.filter((x) => x !== id) : [...f, id]));
   };
 
+  // Prüfen erst nach mindestens einer Markierung (verhindert Leer-Durchläufe)
+  const canCheck = flagged.length > 0 || faults === 0;
+
   const check = () => {
-    if (checked) return;
+    if (checked || !canCheck) return;
     setChecked(true);
     if (!recordedRounds.current.has(roundNo)) {
       recordedRounds.current.add(roundNo);
@@ -126,7 +129,12 @@ export function FaultFinderView({ game }: { game: FaultFinderGame }) {
 
       {!checked ? (
         <div className={s.footer}>
-          <Button icon="search" onClick={check}>
+          {!canCheck && (
+            <span id={`${game.id}-check-hint`} className={s.checkHint}>
+              Markiere zuerst mindestens einen Eintrag.
+            </span>
+          )}
+          <Button icon="search" onClick={check} disabled={!canCheck} aria-describedby={!canCheck ? `${game.id}-check-hint` : undefined}>
             Prüfen
           </Button>
         </div>

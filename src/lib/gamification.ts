@@ -39,6 +39,8 @@ export interface DailyState {
   games: number;
   xp: number;
   claimed: string[]; // erledigte Tagesaufgaben (IDs), Bonus bereits gutgeschrieben
+  /** Bestes Blitzrunden-Ergebnis des Tages (optional für ältere gespeicherte Stände) */
+  blitzBest?: number;
 }
 
 export interface ProgressState {
@@ -55,6 +57,8 @@ export interface ProgressState {
   simulator: { challengesSolved: string[] };
   blitz: { best: number; plays: number };
   profile: { name: string };
+  /** Bereits beantwortete Wissenscheck-Fragen (`${contextId}::${questionId}`) – XP nur beim ersten Mal. */
+  answeredQuestions: Record<string, boolean>;
 }
 
 export const lessonKey = (moduleId: string, lessonId: string) => `${moduleId}/${lessonId}`;
@@ -67,7 +71,7 @@ export function todayISO(d = new Date()): string {
 }
 
 export function emptyDaily(date = todayISO()): DailyState {
-  return { date, quizCorrect: 0, lessons: 0, games: 0, xp: 0, claimed: [] };
+  return { date, quizCorrect: 0, lessons: 0, games: 0, xp: 0, claimed: [], blitzBest: 0 };
 }
 
 export function initialState(): ProgressState {
@@ -78,6 +82,7 @@ export function initialState(): ProgressState {
     exams: {},
     games: {},
     answers: { total: 0, correct: 0 },
+    answeredQuestions: {},
     badges: {},
     activity: {},
     recent: [],
@@ -147,13 +152,23 @@ export function levelFor(xp: number): LevelInfo {
 export const XP = {
   correctAnswer: 5,
   firstTryBonus: 0, // bewusst 0 – kann später aktiviert werden
-  gameBase: 15, // × Score (0..1), mindestens 5
+  gameBase: 15, // × Score (0..1), beim ersten Spiel mindestens 5; Wiederholungen nur für Verbesserung
   caseSolved: 25,
   simChallenge: 30,
   examPerCorrect: 4,
   dailyTask: 20,
   blitzPerCorrect: 3,
 } as const;
+
+/**
+ * XP für ein Lernspiel: Beim ersten Durchgang max(5, 15·Score), danach nur
+ * für die Verbesserung gegenüber dem bisherigen Bestwert (verhindert „XP-Farmen“).
+ */
+export function gameXp(prev: GameResult | undefined, score: number): number {
+  const sc = Math.max(0, Math.min(1, score));
+  if (!prev) return Math.max(5, Math.round(XP.gameBase * sc));
+  return Math.round(XP.gameBase * Math.max(0, sc - prev.bestScore));
+}
 
 /* ------------------------------------------------------------------ */
 /* Serien (Streak)                                                      */
@@ -197,7 +212,8 @@ export function dailyTasksFor(date: string): DailyTaskDef[] {
   let h = 0;
   for (const ch of date) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   const quiz = DAILY_POOL.filter((t) => t.id.startsWith('quiz'))[h % 2];
-  const act = [DAILY_POOL[2], DAILY_POOL[3], DAILY_POOL[4]][(h >> 3) % 3];
+  // Wichtig: vorzeichenloser Shift (>>>), sonst wird der Index für h ≥ 2^31 negativ
+  const act = [DAILY_POOL[2], DAILY_POOL[3], DAILY_POOL[4]][(h >>> 3) % 3];
   const xp = DAILY_POOL[5];
   return [quiz, act, xp];
 }
@@ -212,7 +228,27 @@ export interface BadgeDef {
   description: string;
   icon: IconName;
   tier: 'bronze' | 'silber' | 'gold';
-  check: (s: ProgressState) => boolean;
+  check: (s: ProgressState, ctx: BadgeContext) => boolean;
+}
+
+/** Struktur eines Moduls, soweit sie für Abzeichen relevant ist (hält dieses Modul frei von Inhaltsimporten). */
+export interface ModuleOutline {
+  id: string;
+  /** IDs aller Lektionen außer der Prüfungslektion */
+  lessonIds: string[];
+  /** true, wenn das Modul einen Abschlusstest hat (dann muss er bestanden sein) */
+  hasExam: boolean;
+}
+
+export interface BadgeContext {
+  modules: ModuleOutline[];
+}
+
+/** Modul vollständig: alle Lektionen abgeschlossen und ggf. Abschlusstest bestanden. */
+export function isModuleMastered(s: ProgressState, m: ModuleOutline): boolean {
+  if (m.lessonIds.length === 0) return false;
+  const lessonsDone = m.lessonIds.every((id) => s.lessons[lessonKey(m.id, id)]?.completed);
+  return lessonsDone && (!m.hasExam || !!s.exams[m.id]?.passed);
 }
 
 const completedLessons = (s: ProgressState) => Object.values(s.lessons).filter((l) => l.completed).length;
@@ -225,7 +261,7 @@ export const BADGES: BadgeDef[] = [
   { id: 'perfectionist', title: 'Fehlerfrei', description: 'Ein Lernspiel mit 100 % abgeschlossen.', icon: 'star', tier: 'silber', check: (s) => Object.values(s.games).some((g) => g.bestScore >= 1) },
   { id: 'simulator', title: 'Am Regler', description: 'Erste Simulator-Mission gelöst.', icon: 'sliders', tier: 'bronze', check: (s) => s.simulator.challengesSolved.length >= 1 },
   { id: 'sim-master', title: 'Beatmungsstratege', description: 'Alle Simulator-Missionen gelöst.', icon: 'lungs', tier: 'gold', check: (s) => s.simulator.challengesSolved.length >= 6 },
-  { id: 'module-done', title: 'Modul gemeistert', description: 'Alle Lektionen eines Moduls abgeschlossen.', icon: 'layers', tier: 'silber', check: (s) => completedLessons(s) >= 5 },
+  { id: 'module-done', title: 'Modul gemeistert', description: 'Alle Lektionen eines Moduls inklusive Abschlusstest abgeschlossen.', icon: 'layers', tier: 'silber', check: (s, ctx) => ctx.modules.some((m) => isModuleMastered(s, m)) },
   { id: 'exam-pass', title: 'Zertifiziert', description: 'Einen Abschlusstest bestanden.', icon: 'award', tier: 'gold', check: (s) => Object.values(s.exams).some((e) => e.passed) },
   { id: 'exam-perfect', title: 'Bestnote', description: 'Einen Abschlusstest mit 100 % bestanden.', icon: 'trophy', tier: 'gold', check: (s) => Object.values(s.exams).some((e) => e.bestScore >= 1) },
   { id: 'streak3', title: 'Dranbleiben', description: 'An 3 Tagen in Folge gelernt.', icon: 'flame', tier: 'bronze', check: (s) => streakDays(s.activity) >= 3 },
@@ -233,6 +269,6 @@ export const BADGES: BadgeDef[] = [
   { id: 'blitz', title: 'Blitzmerker', description: 'In der Blitzrunde 10 Punkte erreicht.', icon: 'zap', tier: 'silber', check: (s) => s.blitz.best >= 10 },
 ];
 
-export function newlyEarnedBadges(s: ProgressState): BadgeDef[] {
-  return BADGES.filter((b) => !s.badges[b.id] && b.check(s));
+export function newlyEarnedBadges(s: ProgressState, ctx: BadgeContext): BadgeDef[] {
+  return BADGES.filter((b) => !s.badges[b.id] && b.check(s, ctx));
 }

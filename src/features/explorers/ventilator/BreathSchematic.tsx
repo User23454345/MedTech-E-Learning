@@ -65,7 +65,7 @@ export function BreathSchematic({ phase, inspValve, expValve, paw, palv, vol, fl
   const ticks = [0, 5, 10, 15, 20, 25, 30];
 
   return (
-    <svg className={s.schematic} viewBox="0 0 560 300" role="img" aria-label={`Schema: Inspirationsventil ${VALVE_LABEL[inspValve]}, Exspirationsventil ${VALVE_LABEL[expValve]}, Atemwegsdruck ${paw.toFixed(0)} cmH2O, Volumen ${Math.round(vol)} ml`}>
+    <svg className={s.schematic} viewBox="0 0 560 300" role="img" aria-label={`Schema: Inspirationsventil ${VALVE_LABEL[inspValve]}, Exspirationsventil ${VALVE_LABEL[expValve]}, Atemwegsdruck ${paw.toFixed(0)} cmH₂O, Volumen ${Math.round(vol)} ml`}>
       <defs>
         <radialGradient id="bc-lung" cx="40%" cy="35%" r="75%">
           <stop offset="0%" stopColor="var(--c-surface)" />

@@ -6,11 +6,13 @@ import { LEVELS } from '@/lib/gamification';
 import { AVAILABLE_MODULES } from '@/data/modules';
 import { ActivityChart } from './components/ActivityChart';
 import s from './ProfilePage.module.css';
+import { useDocumentTitle } from '@/lib/useDocumentTitle';
 
 const DATE = new Intl.DateTimeFormat('de', { day: '2-digit', month: '2-digit', year: 'numeric' });
 const TIER_LABEL = { bronze: 'Bronze', silber: 'Silber', gold: 'Gold' } as const;
 
 export default function ProfilePage() {
+  useDocumentTitle('Profil');
   const { state, level, streak } = useProgress();
 
   const completedLessons = Object.values(state.lessons).filter((l) => l.completed).length;
@@ -30,7 +32,7 @@ export default function ProfilePage() {
     { icon: 'gamepad', label: 'Lernspiele', value: String(Object.keys(state.games).length), sub: `${gamePlays} Durchgänge` },
     { icon: 'flame', label: 'Lernserie', value: `${streak} ${streak === 1 ? 'Tag' : 'Tage'}` },
     { icon: 'sliders', label: 'Simulator-Missionen', value: String(state.simulator.challengesSolved.length) },
-    { icon: 'trophy', label: 'Blitz-Rekord', value: `${state.blitz.best} Pkt.`, sub: `${state.blitz.plays} Runden` },
+    { icon: 'trophy', label: 'Blitz-Rekord', value: `${state.blitz.best} Pkt.`, sub: `${state.blitz.plays} ${state.blitz.plays === 1 ? 'Runde' : 'Runden'}` },
     { icon: 'award', label: 'Abzeichen', value: `${earnedCount}/${BADGES.length}` },
   ];
 
@@ -83,8 +85,10 @@ export default function ProfilePage() {
               return (
                 <li key={l.level} className={cx(s.levelItem, reached && s.levelReached, current && s.levelCurrent)} aria-current={current ? 'step' : undefined}>
                   <span className={s.levelDot}>{reached && !current ? <Icon name="check" size={12} strokeWidth={3} /> : l.level}</span>
-                  <span className={s.levelName}>{l.title}</span>
-                  <span className={s.levelXp}>{l.minXp} XP</span>
+                  <span className={s.levelText} title={`${l.title} · ab ${l.minXp} XP`}>
+                    <span className={s.levelName}>{l.title}</span>
+                    <span className={s.levelXp}>{l.minXp} XP</span>
+                  </span>
                 </li>
               );
             })}
@@ -175,10 +179,8 @@ export default function ProfilePage() {
                   <Icon name={at ? b.icon : 'lock'} size={24} />
                 </span>
                 <div className={s.badgeBody}>
-                  <div className={s.badgeTitle}>
-                    {b.title}
-                    <span className={s.tier}>{TIER_LABEL[b.tier]}</span>
-                  </div>
+                  <span className={s.tier}>{TIER_LABEL[b.tier]}</span>
+                  <div className={s.badgeTitle}>{b.title}</div>
                   <div className={s.badgeDesc}>{at ? b.description : `So erreichst du es: ${b.description}`}</div>
                   {at && <div className={s.badgeDate}>Erhalten am {DATE.format(new Date(at))}</div>}
                 </div>

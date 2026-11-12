@@ -34,6 +34,11 @@ export interface QuestionViewProps {
 
 const DIFF_LABEL = ['', 'Basis', 'Mittel', 'Anspruchsvoll'] as const;
 
+const NUM_ERROR = 'Bitte eine Zahl eingeben – Komma oder Punkt als Dezimaltrennzeichen, ohne Tausenderpunkt (z. B. 1000 oder 6,5).';
+
+/** Mini-Markdown-Einheit (cmH~2~O) als Klartext für Screenreader-Labels. */
+const plainUnit = (u: string) => u.replace(/[~^]/g, '');
+
 export function QuestionView({ question: q, order, answer, onAnswer, mode, label, headingLevel = 'h4', autoFocus, hidePrompt }: QuestionViewProps) {
   const uid = useId();
   const promptId = `${uid}-prompt`;
@@ -66,8 +71,15 @@ export function QuestionView({ question: q, order, answer, onAnswer, mode, label
     onAnswer(a);
   };
 
+  /*
+   * Single/Wahr-Falsch: Im Prüfungs- und Review-Modus echtes Radio-Muster
+   * (roving tabindex, Pfeiltasten wählen aus). Im Quiz-Modus würde Auswählen
+   * sofort abgeben – dort daher eine Gruppe normaler Buttons.
+   */
+  const radioPattern = mode !== 'quiz';
+
   /* ---------- Pfeiltasten-Navigation in Optionslisten ---------- */
-  const onListKey = (e: KeyboardEvent<HTMLDivElement>) => {
+  const onListKey = (e: KeyboardEvent<HTMLDivElement>, selectOnMove = false) => {
     if (!['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
     const btns = Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>('button[data-opt]'));
     const i = btns.indexOf(document.activeElement as HTMLButtonElement);
@@ -79,6 +91,7 @@ export function QuestionView({ question: q, order, answer, onAnswer, mode, label
     else if (e.key === 'Home') n = 0;
     else n = btns.length - 1;
     btns[n]?.focus();
+    if (selectOnMove && mode === 'exam') btns[n]?.click();
   };
 
   const Prompt = headingLevel;
@@ -107,13 +120,16 @@ export function QuestionView({ question: q, order, answer, onAnswer, mode, label
 
   const renderChoice = () => {
     const multi = q.kind === 'multiple';
+    const radio = !multi && radioPattern;
+    const checkedOrig = q.kind === 'single' && answer?.kind === 'single' ? answer.index : null;
+    const tabStop = checkedOrig !== null && displayOrder.includes(checkedOrig) ? checkedOrig : displayOrder[0];
     return (
       <div
         className={s.options}
-        role={multi ? 'group' : 'radiogroup'}
+        role={multi ? 'group' : radio ? 'radiogroup' : 'group'}
         aria-labelledby={promptId}
         aria-describedby={reveal ? fbId : undefined}
-        onKeyDown={onListKey}
+        onKeyDown={(e) => onListKey(e, radio)}
       >
         {displayOrder.map((orig, pos) => {
           const st = optState(orig);
@@ -123,8 +139,10 @@ export function QuestionView({ question: q, order, answer, onAnswer, mode, label
               key={orig}
               type="button"
               data-opt
-              role={multi ? 'checkbox' : 'radio'}
-              aria-checked={checked}
+              role={multi ? 'checkbox' : radio ? 'radio' : undefined}
+              aria-checked={multi || radio ? checked : undefined}
+              aria-pressed={!multi && !radio ? checked : undefined}
+              tabIndex={radio ? (orig === tabStop ? 0 : -1) : undefined}
               aria-disabled={locked || undefined}
               className={cx(s.option, s[`opt-${st}`], multi && s.optMulti)}
               onClick={() => {
@@ -155,7 +173,7 @@ export function QuestionView({ question: q, order, answer, onAnswer, mode, label
     if (q.kind !== 'truefalse') return null;
     const chosen = answer?.kind === 'truefalse' ? answer.value : null;
     return (
-      <div className={s.tf} role="radiogroup" aria-labelledby={promptId} onKeyDown={onListKey}>
+      <div className={s.tf} role={radioPattern ? 'radiogroup' : 'group'} aria-labelledby={promptId} onKeyDown={(e) => onListKey(e, radioPattern)}>
         {[true, false].map((v) => {
           const sel = chosen === v;
           let st: 'idle' | 'selected' | 'correct' | 'wrong' | 'missed' | 'dim' = sel ? 'selected' : 'idle';
@@ -165,8 +183,10 @@ export function QuestionView({ question: q, order, answer, onAnswer, mode, label
               key={String(v)}
               type="button"
               data-opt
-              role="radio"
-              aria-checked={sel}
+              role={radioPattern ? 'radio' : undefined}
+              aria-checked={radioPattern ? sel : undefined}
+              aria-pressed={radioPattern ? undefined : sel}
+              tabIndex={radioPattern ? (sel || (chosen === null && v) ? 0 : -1) : undefined}
               aria-disabled={locked || undefined}
               className={cx(s.tfBtn, s[`opt-${st}`])}
               onClick={() => emit({ kind: 'truefalse', value: v })}
@@ -186,9 +206,12 @@ export function QuestionView({ question: q, order, answer, onAnswer, mode, label
   const renderNumeric = () => {
     if (q.kind !== 'numeric') return null;
     const value = mode === 'quiz' && !answer ? draftNum : answer?.kind === 'numeric' ? answer.raw : '';
+    // Prüfungsmodus: Inline-Validierung während der Eingabe
+    const examInvalid = mode === 'exam' && value.trim().length > 0 && parseNumber(value) === null;
+    const errText = numError ?? (examInvalid ? NUM_ERROR : null);
     const submitNum = () => {
       if (parseNumber(draftNum) === null) {
-        setNumError('Bitte eine Zahl eingeben (Komma oder Punkt als Dezimaltrennzeichen).');
+        setNumError(NUM_ERROR);
         return;
       }
       setNumError(null);
@@ -204,7 +227,7 @@ export function QuestionView({ question: q, order, answer, onAnswer, mode, label
           }}
         >
           <label className="visually-hidden" htmlFor={`${uid}-num`}>
-            Antwort in {q.unit}
+            Antwort in {plainUnit(q.unit)}
           </label>
           <input
             id={`${uid}-num`}
@@ -214,8 +237,8 @@ export function QuestionView({ question: q, order, answer, onAnswer, mode, label
             placeholder="Wert"
             value={value}
             readOnly={locked}
-            aria-invalid={numError ? true : undefined}
-            aria-describedby={numError ? `${uid}-numerr` : undefined}
+            aria-invalid={errText ? true : undefined}
+            aria-describedby={errText ? `${uid}-numerr` : undefined}
             onChange={(e) => {
               const raw = e.target.value;
               if (mode === 'quiz') {
@@ -238,9 +261,10 @@ export function QuestionView({ question: q, order, answer, onAnswer, mode, label
             </Button>
           )}
         </form>
-        {numError && (
-          <p id={`${uid}-numerr`} className={s.numError} role="alert">
-            {numError}
+        {errText && (
+          <p id={`${uid}-numerr`} className={s.numError} role={mode === 'quiz' ? 'alert' : undefined} aria-live={mode === 'exam' ? 'polite' : undefined}>
+            {errText}
+            {mode === 'exam' && ' Ungültige Eingaben werden als „nicht beantwortet“ gewertet.'}
           </p>
         )}
       </div>

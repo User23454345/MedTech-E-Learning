@@ -12,6 +12,7 @@ import { LESSON_KIND_LABEL, formatDuration, isLessonDone, isLessonLocked, lesson
 import { LessonToc, scrollToSection, sectionDomId } from './components/LessonToc';
 import { NotFoundView } from './components/NotFoundView';
 import s from './LessonPage.module.css';
+import { useDocumentTitle } from '@/lib/useDocumentTitle';
 
 const END_ID = '__ende';
 
@@ -75,6 +76,7 @@ function useReadingProgress(ref: RefObject<HTMLElement>) {
 }
 
 function LessonView({ module, lesson }: { module: DeviceModule; lesson: Lesson }) {
+  useDocumentTitle(`${lesson.title} · ${module.shortTitle}`);
   const progress = useProgress();
   const { state, visitLesson, markSectionSeen, completeLesson } = progress;
   const articleRef = useRef<HTMLElement>(null);
@@ -120,6 +122,42 @@ function LessonView({ module, lesson }: { module: DeviceModule; lesson: Lesson }
     els.forEach((e) => obs.observe(e));
     if (endEl) obs.observe(endEl);
     return () => obs.disconnect();
+  }, [module.id, lesson.id, lesson.sections]);
+
+  // Zusätzlich: Abschnitt gilt als gelesen, wenn er ≥ 40 % sichtbar ist (bzw. mind. die halbe
+  // Fensterhöhe füllt) und das mindestens 1 s lang. Erfasst v. a. den ersten Abschnitt, der beim
+  // Öffnen unterhalb des Beobachtungsbands beginnt.
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return;
+    const els = lesson.sections.map((sec) => document.getElementById(sectionDomId(sec.id))).filter((e): e is HTMLElement => !!e);
+    const timers = new Map<string, number>();
+    const obs = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          const id = (e.target as HTMLElement).dataset.sectionId;
+          if (!id || id === END_ID) continue;
+          const visibleEnough = e.isIntersecting && (e.intersectionRatio >= 0.4 || e.intersectionRect.height >= window.innerHeight * 0.5);
+          if (visibleEnough && !timers.has(id)) {
+            timers.set(
+              id,
+              window.setTimeout(() => {
+                timers.delete(id);
+                markRef.current(module.id, lesson.id, id);
+              }, 1000),
+            );
+          } else if (!visibleEnough && timers.has(id)) {
+            window.clearTimeout(timers.get(id));
+            timers.delete(id);
+          }
+        }
+      },
+      { threshold: Array.from({ length: 21 }, (_, i) => i / 20) },
+    );
+    els.forEach((e) => obs.observe(e));
+    return () => {
+      obs.disconnect();
+      timers.forEach((t) => window.clearTimeout(t));
+    };
   }, [module.id, lesson.id, lesson.sections]);
 
   // Am Seitenende: alle Abschnitte gelten als gesehen (kurze letzte Abschnitte erreichen die Beobachtungszone evtl. nie)

@@ -56,7 +56,7 @@ export interface PatientParams {
   compliance_ml_per_cmH2O: number;
   /** Resistance [cmH₂O/(L/s)] */
   resistance_cmH2O_per_L_s: number;
-  /** Idealgewicht (predicted body weight) [kg] */
+  /** Sollgewicht (predicted body weight) [kg] */
   pbw_kg: number;
   /** (physiologischer) Totraum [ml] */
   deadspace_ml: number;
@@ -174,7 +174,7 @@ export const MIN_TE_S = 0.3;
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
-/** Idealgewicht (PBW, ARDSNet): Männer 50 + 0,91·(Größe − 152,4), Frauen 45,5 + 0,91·(Größe − 152,4) */
+/** Sollgewicht (PBW, ARDSNet): Männer 50 + 0,91·(Größe − 152,4), Frauen 45,5 + 0,91·(Größe − 152,4) */
 export function pbwFromHeight(height_cm: number, sex: 'm' | 'w'): number {
   const base = sex === 'm' ? 50 : 45.5;
   return Math.max(0, base + 0.91 * (height_cm - 152.4));
@@ -195,10 +195,15 @@ export function effectiveTi_s(s: Pick<VentSettings, 'ti_s' | 'rr_per_min'>): num
   return clamp(s.ti_s, 0.2, cycleTime_s(s.rr_per_min) - MIN_TE_S);
 }
 
+/** Effektive endinspiratorische Pause [s]: mindestens 0,2 s Flowzeit bleiben erhalten (wie im Bedienfeld) */
+export function effectivePause_s(s: Pick<VentSettings, 'ti_s' | 'pause_s' | 'rr_per_min'>): number {
+  const ti = effectiveTi_s(s);
+  return clamp(s.pause_s, 0, Math.max(0, ti - 0.2));
+}
+
 /** Konstanter inspiratorischer Flow im VC-Modus [L/s] = VT / (Ti − Pause) */
 export function vcFlow_L_s(s: Pick<VentSettings, 'vt_ml' | 'ti_s' | 'pause_s' | 'rr_per_min'>): number {
-  const ti = effectiveTi_s(s);
-  const tFlow = Math.max(0.1, ti - clamp(s.pause_s, 0, ti - 0.1));
+  const tFlow = Math.max(0.1, effectiveTi_s(s) - effectivePause_s(s));
   return s.vt_ml / 1000 / tFlow;
 }
 
@@ -223,7 +228,7 @@ export function estimatePaCO2_mmHg(alveolarVent_L_min: number, pbw_kg: number): 
 
 /**
  * Qualitative Oxygenierungs-Tendenz (rein didaktisch!).
- * Benötigte F_IO₂ steigt mit der Gasaustauschstörung; PEEP kann bei
+ * Benötigte FiO₂ steigt mit der Gasaustauschstörung; PEEP kann bei
  * rekrutierbarer Lunge den Bedarf senken (bis PEEP ≈ 15 cmH₂O berücksichtigt).
  */
 export function oxygenationTendency(fio2: number, peep_cmH2O: number, impairment = 0): OxygenationTendency {
@@ -231,11 +236,11 @@ export function oxygenationTendency(fio2: number, peep_cmH2O: number, impairment
   const peepBenefit = imp * 0.3 * clamp((peep_cmH2O - 5) / 10, 0, 1);
   const required = 0.21 + imp * 0.6 - peepBenefit;
   if (fio2 + 1e-9 < required - 0.1)
-    return { level: 'unzureichend', text: 'Oxygenierung voraussichtlich unzureichend – F_IO₂ und/oder PEEP prüfen.' };
+    return { level: 'unzureichend', text: 'Oxygenierung voraussichtlich unzureichend – FiO₂ und/oder PEEP prüfen.' };
   if (fio2 + 1e-9 < required)
-    return { level: 'grenzwertig', text: 'Oxygenierung grenzwertig – bei Gasaustauschstörung helfen F_IO₂ und PEEP.' };
+    return { level: 'grenzwertig', text: 'Oxygenierung grenzwertig – bei Gasaustauschstörung helfen FiO₂ und PEEP.' };
   if (fio2 >= 0.6 && fio2 > required + 0.25)
-    return { level: 'hyperoxie', text: 'Mehr Sauerstoff als nötig – Hyperoxie vermeiden, F_IO₂ reduzieren.' };
+    return { level: 'hyperoxie', text: 'Mehr Sauerstoff als nötig – Hyperoxie vermeiden, FiO₂ reduzieren.' };
   return { level: 'ausreichend', text: 'Oxygenierung voraussichtlich ausreichend.' };
 }
 
@@ -265,17 +270,17 @@ export function simulateBreath(s: VentSettings, p: PatientParams, startVolume_ml
 
   const cycle = cycleTime_s(s.rr_per_min);
   const ti = effectiveTi_s(s);
-  const pause = s.mode === 'VC' ? clamp(s.pause_s, 0, ti - 0.1) : 0;
-  const tFlow = ti - pause;
+  const pause = s.mode === 'VC' ? effectivePause_s(s) : 0;
+  const tFlow = Math.max(0.1, ti - pause);
   const flowVC_L_s = s.vt_ml / 1000 / tFlow;
   const inspEnd = ti + hold; // Ende der Inspiration inkl. Hold
   const total = cycle + hold;
 
-  // PC: Zieldruck (begrenzt auf Pmax)
+  // PC: Zieldruck (begrenzt auf Pmax, nie unter PEEP)
   let pcTarget = peep + s.pinsp_above_peep_cmH2O;
   let pressureLimited = false;
   if (s.mode === 'PC' && pcTarget > pmax) {
-    pcTarget = pmax;
+    pcTarget = Math.max(peep, pmax);
     pressureLimited = true;
   }
 
@@ -349,26 +354,26 @@ export function simulateBreath(s: VentSettings, p: PatientParams, startVolume_ml
         phase = 'exp';
         vEndInsp = V;
       }
+      // passive Exspiration gegen PEEP: V(t) = V·e^(−dt/τ) – läuft auch im Triggerfenster weiter
+      paw = peep;
+      const lungFlow = -(V / C) / R; // L/s (negativ)
+      devFlow_L_s = lungFlow;
+      const vNext = V * Math.exp(-dt / tau);
+      dispVol -= V - vNext; // gemessenes Exspirationsvolumen
+      exhaled += V - vNext;
+      lastExpFlow_L_s = lungFlow;
+      V = vNext;
       const inTrigger = effort > 0 && t > total - TRIGGER_S;
       if (inTrigger) {
-        // didaktisch: Patient atmet ein → Atemwegsdruck fällt kurz unter PEEP, kleiner Inspirationsflow
+        // nur Anzeige (didaktisch): Patient atmet ein → Atemwegsdruck fällt kurz unter PEEP,
+        // kleiner Inspirationsflow wird der Exspiration überlagert. Das Lungenvolumen
+        // des Modells bleibt davon unberührt.
         const x = (t - (total - TRIGGER_S)) / TRIGGER_S;
-        const dip = effort * Math.sin(Math.PI * Math.min(1, x * 1.15));
-        paw = peep - Math.max(0, dip);
-        const f = (Math.max(0, dip) / R) * 0.6; // L/s
-        devFlow_L_s = f;
-        // nur Anzeige: dieses kleine Volumen zählt didaktisch bereits zum nächsten Atemzug
+        const dip = Math.max(0, effort * Math.sin(Math.PI * Math.min(1, x * 1.15)));
+        paw = peep - dip;
+        const f = (dip / R) * 0.6; // L/s
+        devFlow_L_s = lungFlow + f;
         dispVol += f * 1000 * dt;
-      } else {
-        // passive Exspiration gegen PEEP: V(t) = V·e^(−dt/τ)
-        paw = peep;
-        const lungFlow = -(V / C) / R; // L/s (negativ)
-        devFlow_L_s = lungFlow;
-        const vNext = V * Math.exp(-dt / tau);
-        dispVol -= V - vNext; // gemessenes Exspirationsvolumen
-        exhaled += V - vNext;
-        lastExpFlow_L_s = lungFlow;
-        V = vNext;
       }
     }
 
@@ -504,10 +509,14 @@ export interface Alarm {
   explanation: string;
 }
 
+/** Hinweisgrenze VT/kg PBW (lungenprotektives Ziel ≈ 6, Obergrenze meist 8 ml/kg) */
+export const VT_HIGH_ML_PER_KG = 8;
+
 export function defaultAlarmLimits(s: Pick<VentSettings, 'pmax_cmH2O'>, p: Pick<PatientParams, 'pbw_kg'>): AlarmLimits {
   return {
     pmax_cmH2O: s.pmax_cmH2O,
-    mvLow_L_min: 3,
+    // Untergrenzen grob patientenbezogen (≈ 0,07 L/min/kg PBW → 5 L/min bei 70 kg)
+    mvLow_L_min: Math.max(2, Math.round(p.pbw_kg * 0.07 * 2) / 2),
     mvHigh_L_min: 16,
     // ≈ 4 ml/kg PBW
     vteLow_ml: Math.round((p.pbw_kg * 4) / 10) * 10,
@@ -528,24 +537,24 @@ export function evaluateAlarms(m: BreathMetrics, lim: AlarmLimits): Alarm[] {
       title: 'Atemwegsdruck hoch',
       explanation:
         m.mode === 'VC'
-          ? `P_max (${fmt(lim.pmax_cmH2O)} cmH₂O) erreicht: Die Inspiration wurde abgebrochen, das Volumen nicht vollständig appliziert. Ursache suchen (Resistance? Compliance? Flow zu hoch?) statt die Grenze einfach zu erhöhen.`
-          : `Der Inspirationsdruck wird durch P_max (${fmt(lim.pmax_cmH2O)} cmH₂O) begrenzt.`,
+          ? `Pmax (${fmt(lim.pmax_cmH2O)} cmH₂O) erreicht: Die Inspiration wurde abgebrochen, das Volumen nicht vollständig appliziert. Ursache suchen (Resistance? Compliance? Flow zu hoch?) statt die Grenze einfach zu erhöhen.`
+          : `Der Inspirationsdruck wird durch Pmax (${fmt(lim.pmax_cmH2O)} cmH₂O) begrenzt.`,
     });
   }
   if (m.mve_L_min < lim.mvLow_L_min)
-    a.push({ id: 'mv-low', priority: 'high', title: 'Minutenvolumen niedrig', explanation: `MVe ${fmt(m.mve_L_min, 1)} L/min < ${fmt(lim.mvLow_L_min, 1)} L/min: Gefahr der Hypoventilation. Leckage, Diskonnektion, Druckbegrenzung oder Einstellung prüfen.` });
+    a.push({ id: 'mv-low', priority: 'high', title: 'Minutenvolumen niedrig', explanation: `MVe ${fmt(m.mve_L_min, 1)} L/min < ${fmt(lim.mvLow_L_min, 1)} L/min: Gefahr der Hypoventilation. Leckage, Diskonnektion, Druckbegrenzung oder Einstellung prüfen. (Alarmgrenzen werden am Gerät patientenbezogen eingestellt.)` });
   if (m.mve_L_min > lim.mvHigh_L_min)
     a.push({ id: 'mv-high', priority: 'medium', title: 'Minutenvolumen hoch', explanation: `MVe ${fmt(m.mve_L_min, 1)} L/min > ${fmt(lim.mvHigh_L_min, 1)} L/min: Hyperventilation möglich (PaCO₂ ↓).` });
   if (m.vte_ml < lim.vteLow_ml)
-    a.push({ id: 'vte-low', priority: 'medium', title: 'Tidalvolumen niedrig', explanation: `VTe ${fmt(m.vte_ml)} ml < ${fmt(lim.vteLow_ml)} ml. Mögliche Ursachen: Leck, Druckbegrenzung, sinkende Compliance (im PC-Modus).` });
+    a.push({ id: 'vte-low', priority: 'medium', title: 'Tidalvolumen niedrig', explanation: `VTe ${fmt(m.vte_ml)} ml < ${fmt(lim.vteLow_ml)} ml. Mögliche Ursachen: Leck, Druckbegrenzung, sinkende Compliance oder steigende Resistance (im PC-Modus). Die Grenze (hier ≈ 4 ml/kg PBW) wird am Gerät patientenbezogen eingestellt.` });
   if (m.autoPeep_cmH2O >= 1)
     a.push({ id: 'autopeep', priority: 'low', title: 'Intrinsischer PEEP', explanation: `Exspiration unvollständig (Te ${fmt(m.te_s, 1)} s < 3 τ = ${fmt(3 * m.tau_s, 1)} s). Air Trapping: PEEPi ≈ ${fmt(m.autoPeep_cmH2O, 1)} cmH₂O.` });
   if (m.pplat_cmH2O > 30)
     a.push({ id: 'pplat', priority: 'low', title: 'Plateaudruck > 30', explanation: 'Lungenprotektive Zielgröße (Pplat ≤ 30 cmH₂O) überschritten.' });
   if (m.drivingPressure_cmH2O > 15)
-    a.push({ id: 'dp', priority: 'low', title: 'Driving Pressure > 15', explanation: 'ΔP = Pplat − PEEP über 15 cmH₂O – VT bezogen auf die Compliance eher zu groß.' });
-  if (m.vtPerKg_ml_per_kg > 8.5)
-    a.push({ id: 'vt-high', priority: 'low', title: 'VT > 8 ml/kg PBW', explanation: 'Tidalvolumen oberhalb des lungenprotektiven Bereichs (≈ 6–8 ml/kg Idealgewicht).' });
+    a.push({ id: 'dp', priority: 'low', title: 'Driving Pressure > 15', explanation: 'ΔP = Pplat − PEEP (inkl. intrinsischem PEEP) über 15 cmH₂O – VT bezogen auf die Compliance eher zu groß.' });
+  if (m.vtPerKg_ml_per_kg > VT_HIGH_ML_PER_KG)
+    a.push({ id: 'vt-high', priority: 'low', title: 'VT > 8 ml/kg PBW', explanation: 'Tidalvolumen über 8 ml/kg Sollgewicht (PBW) – lungenprotektives Ziel ≈ 6 ml/kg.' });
   const order: Record<AlarmPriority, number> = { high: 0, medium: 1, low: 2 };
   return a.sort((x, y) => order[x.priority] - order[y.priority]);
 }

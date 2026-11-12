@@ -78,9 +78,47 @@
   20%, 80% { transform: translateX(3px); }
   40%, 60% { transform: translateX(-5px); }
 }
+/* Auswahlleiste (nur mobil): zeigt den gewählten Begriff, während man zu den Beschreibungen scrollt */
+.boardWrap { position: relative; }
+.rightCol { scroll-margin-top: calc(var(--header-h) + var(--sp-4)); }
+.selBar { display: none; }
 @media (max-width: 600px) {
   .board { grid-template-columns: 1fr; gap: var(--sp-4); }
   .selected { transform: none; }
+  .selBar {
+    position: sticky;
+    bottom: calc(80px + env(safe-area-inset-bottom));
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    margin-top: var(--sp-3);
+    padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-3);
+    border-radius: var(--r-md);
+    background: var(--c-primary-600);
+    color: var(--c-text-inverse);
+    font-size: var(--fs-sm);
+    box-shadow: var(--shadow-lg);
+  }
+  .selText { flex: 1; min-width: 0; line-height: 1.4; }
+  .selNext { opacity: 0.85; }
+  .selCancel {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: var(--r-sm);
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+  .selCancel:hover { background: var(--c-primary-500); }
+}
+@media (max-width: 1024px) {
+  /* In Lektionen liegt mobil zusätzlich die sticky „Inhalt“-Leiste unter dem Header */
+  .rightCol { scroll-margin-top: calc(var(--header-h) + 72px); }
 }
 @media (prefers-reduced-motion: reduce) {
   .matched, .wrong { animation: none; }

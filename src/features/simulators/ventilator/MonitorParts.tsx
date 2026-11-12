@@ -2,7 +2,7 @@
  * Messwertspalte und Alarmleiste des Simulators.
  */
 import { Icon, cx } from '@/components/ui';
-import { fmt, fmtIE, type Alarm, type BreathMetrics } from './model';
+import { VT_HIGH_ML_PER_KG, fmt, fmtIE, type Alarm, type BreathMetrics } from './model';
 import s from './VentilatorSimulator.module.css';
 
 interface Tile {
@@ -16,14 +16,25 @@ interface Tile {
 }
 
 export function MeasuredValues({ m, fio2 }: { m: BreathMetrics; fio2: number }) {
+  // Intrinsischer PEEP ist ein Modellwert – am Gerät nur per Exsp.-Hold messbar
+  const peepiModel = m.autoPeep_cmH2O >= 0.5;
+  const modelMark = !m.pplatMeasured || peepiModel;
   const tiles: Tile[] = [
     { key: 'ppeak', label: <>P<sub>peak</sub></>, value: fmt(m.ppeak_cmH2O, 1), unit: 'cmH₂O', tone: 'p', title: 'Spitzendruck' },
     { key: 'pplat', label: <>P<sub>plat</sub>{!m.pplatMeasured && '*'}</>, value: fmt(m.pplat_cmH2O, 1), unit: 'cmH₂O', tone: 'p', title: m.pplatMeasured ? 'Plateaudruck (gemessen)' : 'Plateaudruck (Modellwert)', warn: m.pplat_cmH2O > 30 },
-    { key: 'peep', label: <>PEEP<sub>tot</sub></>, value: fmt(m.peepTotal_cmH2O, 1), unit: 'cmH₂O', tone: 'p', title: 'Gesamt-PEEP inkl. intrinsischem PEEP', warn: m.autoPeep_cmH2O >= 1 },
+    {
+      key: 'peep',
+      label: <>PEEP<sub>tot</sub>{peepiModel && '*'}</>,
+      value: fmt(m.peepTotal_cmH2O, 1),
+      unit: 'cmH₂O',
+      tone: 'p',
+      title: peepiModel ? `Gesamt-PEEP (Modellwert, eingestellt ${fmt(m.peepSet_cmH2O)} + intrinsisch ${fmt(m.autoPeep_cmH2O, 1)} cmH₂O – am Gerät nur mit Exsp.-Hold messbar)` : 'Gesamt-PEEP (≈ eingestellter PEEP, kein relevanter intrinsischer PEEP)',
+      warn: m.autoPeep_cmH2O >= 1,
+    },
     { key: 'pmean', label: <>P<sub>mean</sub></>, value: fmt(m.pmean_cmH2O, 1), unit: 'cmH₂O', tone: 'p', title: 'Mittlerer Atemwegsdruck' },
-    { key: 'dp', label: 'ΔP', value: fmt(m.drivingPressure_cmH2O, 1), unit: 'cmH₂O', tone: 'p', title: 'Driving Pressure = Pplat − PEEP', warn: m.drivingPressure_cmH2O > 15 },
+    { key: 'dp', label: 'ΔP', value: fmt(m.drivingPressure_cmH2O, 1), unit: 'cmH₂O', tone: 'p', title: 'Driving Pressure ΔP = Pplat − PEEPtot (inkl. intrinsischem PEEP)', warn: m.drivingPressure_cmH2O > 15 },
     { key: 'vte', label: <>VT<sub>e</sub></>, value: fmt(m.vte_ml), unit: 'ml', tone: 'v', title: 'Exspiratorisches Tidalvolumen' },
-    { key: 'vtkg', label: 'VT/kg', value: fmt(m.vtPerKg_ml_per_kg, 1), unit: 'ml/kg', tone: 'v', title: 'Tidalvolumen pro kg Idealgewicht (PBW)', warn: m.vtPerKg_ml_per_kg > 8.5 },
+    { key: 'vtkg', label: 'VT/kg', value: fmt(m.vtPerKg_ml_per_kg, 1), unit: 'ml/kg', tone: 'v', title: 'Tidalvolumen pro kg Sollgewicht (PBW)', warn: m.vtPerKg_ml_per_kg > VT_HIGH_ML_PER_KG },
     { key: 'mve', label: <>MV<sub>e</sub></>, value: fmt(m.mve_L_min, 1), unit: 'L/min', tone: 'v', title: 'Exspiratorisches Minutenvolumen' },
     { key: 'f', label: 'f', value: fmt(m.rr_per_min), unit: '/min', tone: 'n', title: 'Atemfrequenz' },
     { key: 'ie', label: 'I:E', value: fmtIE(m.ie_te_per_ti), unit: '', tone: 'n', title: 'Verhältnis Inspirations- zu Exspirationszeit' },
@@ -50,7 +61,12 @@ export function MeasuredValues({ m, fio2 }: { m: BreathMetrics; fio2: number }) 
         </span>
       </div>
       <p className={s.footnote}>
-        {!m.pplatMeasured && <>* Modellwert – am Gerät nur mit Insp.-Pause/-Hold messbar. </>}~ didaktische Schätzung, keine klinische Vorhersage.
+        {modelMark && (
+          <>
+            * Modellwert – am Gerät nur mit {!m.pplatMeasured && peepiModel ? 'Insp.- bzw. Exsp.-Hold' : peepiModel ? 'Exsp.-Hold' : 'Insp.-Pause/-Hold'} messbar.{' '}
+          </>
+        )}
+        {peepiModel && <>ΔP = P<sub>plat</sub> − PEEP<sub>tot</sub>. </>}~ didaktische Schätzung, keine klinische Vorhersage.
       </p>
     </div>
   );

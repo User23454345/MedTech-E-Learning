@@ -28,7 +28,7 @@ export const lessonPruefung: Lesson = {
       blocks: [
         {
           type: 'text',
-          md: `Du hast alle Lektionen bearbeitet – jetzt zeigst du, was du kannst. Der Abschlusstest besteht aus **${ventilatorExam.questionCount} Fragen**, die bei jedem Durchgang neu und ausgewogen aus einem größeren Fragenpool zusammengestellt werden. Du begegnest Single- und Multiple-Choice-Fragen, Richtig-/Falsch-Aussagen und kleinen Rechenaufgaben.
+          md: `Du hast die Grundlagen-Lektionen bearbeitet – jetzt zeigst du, was du kannst. Der Abschlusstest besteht aus **${ventilatorExam.questionCount} Fragen**, die bei jedem Durchgang neu und ausgewogen aus einem größeren Fragenpool zusammengestellt werden. Du begegnest Single- und Multiple-Choice-Fragen, Richtig-/Falsch-Aussagen und kleinen Rechenaufgaben.
 
 **Bestanden** hast du ab **${passPercent} %** richtigen Antworten. Für das Bestehen erhältst du zusätzlich **${ventilatorExam.xp} XP**.`,
         },
@@ -68,7 +68,7 @@ export const lessonPruefung: Lesson = {
         {
           type: 'callout',
           variant: 'info',
-          title: 'Hinweis',
+          title: 'Keine Geräteeinweisung',
           md: 'Der Test prüft Verständnis und Grundlagenwissen. Er ersetzt keine gerätespezifische Einweisung nach MPBetreibV; konkrete Einstellungen richten sich immer nach ärztlicher Anordnung, Gebrauchsanweisung und lokalen SOPs.',
         },
       ],

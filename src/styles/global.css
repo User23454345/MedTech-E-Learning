@@ -9,6 +9,8 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
+  /* Sprungziele (scrollIntoView, Anker) nicht unter dem fixierten Header verstecken */
+  scroll-padding-top: calc(var(--header-h) + var(--sp-4));
 }
 
 @media (prefers-reduced-motion: reduce) {

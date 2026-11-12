@@ -184,3 +184,4 @@
   .bolt, .urgent .timerNum, .qArea, .ok, .bad, .msgOk, .msgBad, .endPoints, .record { animation: none; }
 }
 .raceNote { font-size: var(--fs-xs); color: var(--c-text-3); font-weight: 600; }
+.anchor { scroll-margin-top: calc(var(--header-h) + var(--sp-4)); }

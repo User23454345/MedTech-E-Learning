@@ -3,6 +3,8 @@
   margin: var(--sp-8) 0;
   padding: var(--sp-6);
   overflow: hidden;
+  /* clip statt hidden: erlaubt position: sticky in Kindelementen (z. B. Auswahlleiste im Zuordnungsspiel) */
+  overflow: clip;
 }
 .frame::before {
   content: '';
@@ -28,7 +30,7 @@
   background: linear-gradient(135deg, var(--c-primary-50), var(--c-accent-50));
   color: var(--c-primary-600);
 }
-.headText { flex: 1; min-width: 0; }
+.headText { flex: 1 1 200px; min-width: 0; }
 .kind {
   font-size: var(--fs-xs);
   font-weight: 700;
@@ -98,6 +100,9 @@
 
 @media (max-width: 560px) {
   .frame { padding: var(--sp-4); margin: var(--sp-6) 0; }
+  /* Meta-Pills in eigener Zeile unter dem Titel, damit der Titel nicht Wort für Wort umbricht */
+  .headText { flex-basis: 0; }
+  .meta { flex-basis: 100%; }
   .result { flex-direction: column; text-align: center; padding: var(--sp-4); }
   .resultHeading { justify-content: center; }
   .stats, .actions { justify-content: center; }

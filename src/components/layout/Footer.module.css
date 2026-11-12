@@ -57,6 +57,6 @@
 }
 @media (max-width: 860px) {
   .footer {
-    padding-bottom: calc(var(--sp-8) + 72px);
+    padding-bottom: calc(var(--sp-8) + 72px + env(safe-area-inset-bottom));
   }
 }

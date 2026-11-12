@@ -3,7 +3,7 @@
  *   P_aw = PEEP + V/C + R · V̇
  * Gestapelter Balken der drei Druckanteile + statische P-t-Kurve (VC, konstanter Flow).
  */
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Icon } from '@/components/ui';
 import { ControlSlider } from './ControlSlider';
 import { fmt } from './model';
@@ -59,6 +59,17 @@ function StackedBar({ v, p, top }: { v: Values; p: ReturnType<typeof parts>; top
   const barW = 64;
   const ticks: number[] = [];
   for (let t = 0; t <= top; t += top > 60 ? 20 : 10) ticks.push(t);
+  // y-Positionen der rechten Markierungstexte (Mittellinie)
+  const peakLabelY = y(p.ppeak);
+  const platLabelY = Math.max(y(p.pplat), y(p.ppeak) + 14);
+  const peepLabelY = Math.min(y(v.peep / 2), H - padB - 6);
+  const candidates = [y(30) - 7, y(30) + 9]; // Mittellinie über / unter der Grenzlinie
+  const limitLabelY = (() => {
+    for (const c of candidates) {
+      if ([peakLabelY, platLabelY, peepLabelY].every((m) => Math.abs(m - c) >= 12) && c > padT - 10) return c + 3.5;
+    }
+    return null;
+  })();
   const segs = [
     { key: 'peep', from: 0, to: v.peep, cls: s.segPeep, label: 'PEEP' },
     { key: 'el', from: v.peep, to: p.pplat, cls: s.segElastic, label: 'V/C' },
@@ -77,13 +88,15 @@ function StackedBar({ v, p, top }: { v: Values; p: ReturnType<typeof parts>; top
       <text x={6} y={10} className={s.axisText}>
         cmH₂O
       </text>
-      {/* Grenze 30 cmH₂O (Plateau) */}
+      {/* Grenze 30 cmH₂O (Plateau) – Beschriftung so platzieren, dass sie die Markierungen nicht überdeckt */}
       {top >= 30 && (
         <g>
           <line x1={barX - 6} x2={232} y1={y(30)} y2={y(30)} className={s.limitLine} />
-          <text x={232} y={y(30) - 4} className={s.limitText} textAnchor="end">
-            Pplat-Ziel ≤ 30
-          </text>
+          {limitLabelY !== null && (
+            <text x={232} y={limitLabelY} className={s.limitText} textAnchor="end">
+              Pplat-Ziel ≤ 30
+            </text>
+          )}
         </g>
       )}
       {segs.map((sg) =>
@@ -101,14 +114,14 @@ function StackedBar({ v, p, top }: { v: Values; p: ReturnType<typeof parts>; top
       {/* Beschriftung rechts */}
       <g className={s.sideLabels}>
         <line x1={barX + barW} x2={barX + barW + 14} y1={y(p.ppeak)} y2={y(p.ppeak)} className={s.markLine} />
-        <text x={barX + barW + 18} y={y(p.ppeak)} dominantBaseline="middle" className={s.markText}>
+        <text x={barX + barW + 18} y={peakLabelY} dominantBaseline="middle" className={s.markText}>
           Ppeak {fmt(p.ppeak, 1)}
         </text>
         <line x1={barX + barW} x2={barX + barW + 14} y1={y(p.pplat)} y2={y(p.pplat)} className={s.markLine} />
-        <text x={barX + barW + 18} y={Math.max(y(p.pplat), y(p.ppeak) + 14)} dominantBaseline="middle" className={s.markText}>
+        <text x={barX + barW + 18} y={platLabelY} dominantBaseline="middle" className={s.markText}>
           Pplat {fmt(p.pplat, 1)}
         </text>
-        <text x={barX + barW + 18} y={Math.min(y(v.peep / 2), H - padB - 6)} dominantBaseline="middle" className={s.markTextMuted}>
+        <text x={barX + barW + 18} y={peepLabelY} dominantBaseline="middle" className={s.markTextMuted}>
           PEEP {fmt(v.peep)}
         </text>
       </g>
@@ -120,8 +133,25 @@ function StackedBar({ v, p, top }: { v: Values; p: ReturnType<typeof parts>; top
 }
 
 /* ---------- Statische P-t-Kurve ---------- */
-function PressureTime({ v, p, top }: { v: Values; p: ReturnType<typeof parts>; top: number }) {
-  const W = 520;
+/** Breite des Containers in px – damit die SVG-Schrift 1:1 (nicht verkleinert) dargestellt wird */
+function useWidth<T extends HTMLElement>(fallback: number) {
+  const ref = useRef<T>(null);
+  const [w, setW] = useState(fallback);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver((entries) => {
+      const cw = Math.round(entries[0]?.contentRect.width ?? 0);
+      if (cw > 0) setW(cw);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return [ref, w] as const;
+}
+
+function PressureTime({ v, p, top, width }: { v: Values; p: ReturnType<typeof parts>; top: number; width: number }) {
+  const W = Math.max(300, Math.min(900, width));
   const H = 210;
   const padL = 36;
   const padR = 12;
@@ -144,10 +174,17 @@ function PressureTime({ v, p, top }: { v: Values; p: ReturnType<typeof parts>; t
     palv += ` L${x(tEnd + t)},${y(v.peep + p.elastic * Math.exp(-t / Math.max(0.01, p.tau)))}`;
   }
   const ticksT: number[] = [];
-  for (let t = 0; t <= total; t += total > 5 ? 1 : 0.5) ticksT.push(t);
+  const tStep = total > 5 || W < 420 ? 1 : 0.5;
+  for (let t = 0; t <= total; t += tStep) ticksT.push(t);
   const ticksP: number[] = [];
   for (let t = 0; t <= top; t += top > 60 ? 20 : 10) ticksP.push(t);
-  const braceX = x(p.ti) + 6;
+  // Annotationsklammern neutral und mit Abstand zur Druckkurve
+  const braceX = x(p.ti) + 9;
+  const cap = 4;
+  const resTop = y(p.ppeak);
+  const resBot = y(p.pplat);
+  const elTop = y(p.pplat);
+  const elBot = y(v.peep);
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className={s.ptSvg} role="img" aria-label={`Druck-Zeit-Kurve: Spitzendruck ${fmt(p.ppeak, 1)}, Plateaudruck ${fmt(p.pplat, 1)}, PEEP ${fmt(v.peep)} cmH₂O`}>
@@ -177,12 +214,16 @@ function PressureTime({ v, p, top }: { v: Values; p: ReturnType<typeof parts>; t
       <path d={palv} className={s.palv} />
       <path d={paw} className={s.paw} />
       {/* Klammern */}
-      <line x1={braceX} x2={braceX} y1={y(p.ppeak)} y2={y(p.pplat)} className={s.braceRes} />
-      <line x1={braceX} x2={braceX} y1={y(p.pplat)} y2={y(v.peep)} className={s.braceEl} />
-      <text x={braceX + 5} y={(y(p.ppeak) + y(p.pplat)) / 2} className={s.braceTextRes} dominantBaseline="middle">
+      {resBot - resTop > 3 && (
+        <path d={`M${braceX - cap},${resTop + 1} H${braceX} V${resBot - 1} H${braceX - cap}`} className={s.brace} />
+      )}
+      {elBot - elTop > 3 && (
+        <path d={`M${braceX + cap},${elTop + 1} H${braceX + 2} V${elBot - 1} H${braceX + cap}`} className={s.brace} />
+      )}
+      <text x={braceX + 7} y={(resTop + resBot) / 2} className={s.braceTextRes} dominantBaseline="middle">
         R·V̇
       </text>
-      <text x={braceX + 5} y={(y(p.pplat) + y(v.peep)) / 2} className={s.braceTextEl} dominantBaseline="middle">
+      <text x={braceX + 7} y={(elTop + elBot) / 2} className={s.braceTextEl} dominantBaseline="middle">
         V/C
       </text>
       <circle cx={x(p.ti)} cy={y(p.ppeak)} r={3.5} className={s.dotPeak} />
@@ -202,6 +243,7 @@ export default function EquationOfMotion() {
   const baseRef = useRef<{ key: Key; from: number; at: number } | null>(null);
   const p = useMemo(() => parts(v), [v]);
   const top = Math.max(40, Math.ceil((p.ppeak + 4) / 10) * 10);
+  const [ptRef, ptWidth] = useWidth<HTMLDivElement>(520);
 
   const set = (key: Key) => (val: number) => {
     const now = Date.now();
@@ -290,7 +332,9 @@ export default function EquationOfMotion() {
             <span className={s.lgPaw} /> Atemwegsdruck <span className={s.lgPalv} /> Alveolardruck (Modell)
           </span>
         </div>
-        <PressureTime v={v} p={p} top={top} />
+        <div ref={ptRef}>
+          <PressureTime v={v} p={p} top={top} width={ptWidth} />
+        </div>
       </div>
 
       <div className={s.explain} aria-live="polite">

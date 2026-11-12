@@ -44,6 +44,13 @@ export const WaveformMonitor = forwardRef<WaveformMonitorHandle, { engine: Sweep
         const ctx = cv.getContext('2d');
         const { w, h } = sizes.current[ch.key];
         if (!ctx || w === 0) continue;
+        // devicePixelRatio kann sich ohne Größenänderung ändern (Zoom, anderer Monitor)
+        const tw = Math.round(w * dpr);
+        const th = Math.round(h * dpr);
+        if (cv.width !== tw || cv.height !== th) {
+          cv.width = tw;
+          cv.height = th;
+        }
         const data = ch.key === 'p' ? engine.p : ch.key === 'flow' ? engine.flow : engine.vol;
         const line = ch.key === 'p' ? c.pressure : ch.key === 'flow' ? c.flow : c.volume;
         drawSweep(ctx, w, h, dpr, data, engine.cursor, engine.gapN, scalesRef.current[ch.key], { bg: c.bg, grid: c.grid, text: c.text, line }, engine.windowS);

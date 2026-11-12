@@ -55,6 +55,7 @@ export function MatchingGameView({ game }: { game: MatchingGame }) {
   const recordedRounds = useRef(new Set<number>());
   const suppressClick = useRef(false);
   const wrongTimer = useRef<number | null>(null);
+  const rightColRef = useRef<HTMLDivElement>(null);
 
   const elapsed = useElapsed(startAt, endAt);
   const done = matched.length === n && n > 0;
@@ -101,7 +102,15 @@ export function MatchingGameView({ game }: { game: MatchingGame }) {
     if (done || matched.includes(id) || wrong) return;
     ensureStarted();
     if (selRight) attempt(id, selRight);
-    else setSelLeft(selLeft === id ? null : id);
+    else {
+      const next = selLeft === id ? null : id;
+      setSelLeft(next);
+      // Mobil (Spalten untereinander): direkt zu den Beschreibungen springen
+      if (next && window.matchMedia?.('(max-width: 600px)').matches) {
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        rightColRef.current?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+      }
+    }
   };
 
   const pickRight = (id: string) => {
@@ -195,84 +204,112 @@ export function MatchingGameView({ game }: { game: MatchingGame }) {
         <Icon name="hand" size={16} /> Tippe einen Begriff und dann die passende Beschreibung an – oder ziehe den Begriff hinüber.
       </p>
 
-      <div className={s.board} onKeyDown={onKey}>
-        <div className={s.col}>
-          <h4 className={s.colTitle}>Begriffe</h4>
-          <ul className={s.list}>
-            {round.left.map((id) => {
-              const isM = matched.includes(id);
-              const isWrong = wrong?.l === id;
-              return (
-                <li key={`${roundNo}-${id}`}>
-                  <button
-                    type="button"
-                    className={cx(
-                      s.item,
-                      s.left,
-                      selLeft === id && s.selected,
-                      isM && s.matched,
-                      isWrong && s.wrong,
-                      drag?.active && drag.id === id && s.dragging,
-                    )}
-                    aria-pressed={selLeft === id}
-                    aria-disabled={isM || undefined}
-                    onClick={() => pickLeft(id)}
-                    onPointerDown={(e) => onPointerDown(e, id)}
-                    onPointerMove={onPointerMove}
-                    onPointerUp={onPointerUp}
-                    onPointerCancel={onPointerCancel}
-                  >
-                    {!isM && (
-                      <span className={s.grip} data-grip aria-hidden>
-                        <GripIcon size={16} />
+      <div className={s.boardWrap}>
+        <div className={s.board} onKeyDown={onKey}>
+          <div className={s.col}>
+            <h4 className={s.colTitle}>Begriffe</h4>
+            <ul className={s.list}>
+              {round.left.map((id) => {
+                const isM = matched.includes(id);
+                const isWrong = wrong?.l === id;
+                return (
+                  <li key={`${roundNo}-${id}`}>
+                    <button
+                      type="button"
+                      className={cx(
+                        s.item,
+                        s.left,
+                        selLeft === id && s.selected,
+                        isM && s.matched,
+                        isWrong && s.wrong,
+                        drag?.active && drag.id === id && s.dragging,
+                      )}
+                      aria-pressed={selLeft === id}
+                      aria-disabled={isM || undefined}
+                      onClick={() => pickLeft(id)}
+                      onPointerDown={(e) => onPointerDown(e, id)}
+                      onPointerMove={onPointerMove}
+                      onPointerUp={onPointerUp}
+                      onPointerCancel={onPointerCancel}
+                    >
+                      {!isM && (
+                        <span className={s.grip} data-grip aria-hidden>
+                          <GripIcon size={16} />
+                        </span>
+                      )}
+                      <span className={s.text}>
+                        <InlineMd text={byId.get(id)?.left ?? ''} />
                       </span>
-                    )}
-                    <span className={s.text}>
-                      <InlineMd text={byId.get(id)?.left ?? ''} />
-                    </span>
-                    {isM && (
-                      <span className={s.badge} aria-label={`Paar ${matchNo(id)}`}>
-                        {matchNo(id)}
-                      </span>
-                    )}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+                      {isM && (
+                        <span className={s.badge} aria-label={`Paar ${matchNo(id)}`}>
+                          {matchNo(id)}
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
 
-        <div className={s.col}>
-          <h4 className={s.colTitle}>Beschreibungen</h4>
-          <ul className={s.list}>
-            {round.right.map((id) => {
-              const isM = matched.includes(id);
-              const isWrong = wrong?.r === id;
-              return (
-                <li key={`${roundNo}-${id}`}>
-                  <button
-                    type="button"
-                    data-right-id={id}
-                    className={cx(s.item, s.right, selRight === id && s.selected, isM && s.matched, isWrong && s.wrong, hoverRight === id && s.dropTarget)}
-                    aria-pressed={selRight === id}
-                    aria-disabled={isM || undefined}
-                    onClick={() => pickRight(id)}
-                  >
-                    {isM && (
-                      <span className={s.badge} aria-label={`Paar ${matchNo(id)}`}>
-                        {matchNo(id)}
+          <div className={cx(s.col, s.rightCol)} ref={rightColRef}>
+            <h4 className={s.colTitle}>Beschreibungen</h4>
+            <ul className={s.list}>
+              {round.right.map((id) => {
+                const isM = matched.includes(id);
+                const isWrong = wrong?.r === id;
+                return (
+                  <li key={`${roundNo}-${id}`}>
+                    <button
+                      type="button"
+                      data-right-id={id}
+                      className={cx(
+                        s.item,
+                        s.right,
+                        selRight === id && s.selected,
+                        isM && s.matched,
+                        isWrong && s.wrong,
+                        hoverRight === id && s.dropTarget,
+                      )}
+                      aria-pressed={selRight === id}
+                      aria-disabled={isM || undefined}
+                      onClick={() => pickRight(id)}
+                    >
+                      {isM && (
+                        <span className={s.badge} aria-label={`Paar ${matchNo(id)}`}>
+                          {matchNo(id)}
+                        </span>
+                      )}
+                      <span className={s.text}>
+                        <InlineMd text={byId.get(id)?.right ?? ''} />
                       </span>
-                    )}
-                    <span className={s.text}>
-                      <InlineMd text={byId.get(id)?.right ?? ''} />
-                    </span>
-                    {isM && <Icon name="check" size={18} strokeWidth={2.4} className={s.checkIcon} />}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+                      {isM && <Icon name="check" size={18} strokeWidth={2.4} className={s.checkIcon} />}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         </div>
+        {(selLeft || selRight) && !done && (
+          <div className={s.selBar} aria-hidden>
+            <span className={s.selText}>
+              <strong>Ausgewählt:</strong> <InlineMd text={selLeft ? (byId.get(selLeft)?.left ?? '') : (byId.get(selRight ?? '')?.right ?? '')} />
+              <span className={s.selNext}> – jetzt {selLeft ? 'Beschreibung' : 'Begriff'} antippen</span>
+            </span>
+            <button
+              type="button"
+              className={s.selCancel}
+              tabIndex={-1}
+              onClick={() => {
+                setSelLeft(null);
+                setSelRight(null);
+              }}
+            >
+              <Icon name="x" size={16} />
+            </button>
+          </div>
+        )}
       </div>
 
       {drag?.active && (

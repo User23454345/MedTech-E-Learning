@@ -7,6 +7,7 @@ import type { DeviceModule } from '@/types/content';
 import { ModuleCard } from './components/ModuleCard';
 import { EmptyState } from './components/EmptyState';
 import s from './CatalogPage.module.css';
+import { useDocumentTitle } from '@/lib/useDocumentTitle';
 
 type LevelFilter = 'alle' | DeviceModule['level'];
 const LEVEL_OPTIONS: { value: LevelFilter; label: string }[] = [
@@ -19,6 +20,7 @@ const LEVEL_OPTIONS: { value: LevelFilter; label: string }[] = [
 const norm = (t: string) => t.toLocaleLowerCase('de').normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 export default function CatalogPage() {
+  useDocumentTitle('Gerätekatalog');
   const [params, setParams] = useSearchParams();
   const catParam = params.get('kategorie');
   const activeCat = catParam && categoryById(catParam) ? catParam : null;

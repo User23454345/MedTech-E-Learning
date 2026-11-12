@@ -90,12 +90,12 @@ Man kann das Gerät gedanklich in drei Bereiche gliedern:
               md: 'Über **Endotrachealtubus** oder **Trachealkanüle** gelangt das Gas in die Lunge. Tubus und Atemwege bilden einen Widerstand, die Lunge eine Dehnbarkeit (Compliance) – beides bestimmt, welcher Druck für ein bestimmtes Volumen nötig ist.',
             },
             {
-              title: '8. Exspirationsschenkel & Exspirationsventil (exp-limb, exp-valve)',
-              md: 'In der Ausatmung strömt das Gas passiv über den **Exspirationsschenkel** zurück. Das **Exspirationsventil** öffnet und hält dabei den eingestellten **PEEP** aufrecht.',
+              title: '8. Exspirationsschenkel & exspiratorischer Flowsensor (exp-limb, exp-flow-sensor)',
+              md: 'In der Ausatmung strömt das Gas passiv über den **Exspirationsschenkel** zurück zum Gerät. Der **exspiratorische Flowsensor** misst das tatsächlich ausgeatmete Volumen; der Vergleich mit dem inspiratorischen Volumen deckt **Leckagen** auf.',
             },
             {
-              title: '9. Exspiratorischer Flowsensor & Gasauslass (exp-flow-sensor)',
-              md: 'Der **exspiratorische Flowsensor** misst das tatsächlich ausgeatmete Volumen. Der Vergleich mit dem inspiratorischen Volumen deckt **Leckagen** auf. Anschließend verlässt das Gas das Gerät über den Gasauslass in die Raumluft (beim Narkosegerät dagegen in die Narkosegasabsaugung bzw. zurück ins Kreissystem).',
+              title: '9. Exspirationsventil & Gasauslass (exp-valve)',
+              md: 'Das **Exspirationsventil** öffnet und hält dabei den eingestellten **PEEP** aufrecht; anschließend verlässt das Gas das Gerät über den Gasauslass in die Raumluft (beim Narkosegerät dagegen in die Narkosegasabsaugung bzw. zurück ins Kreissystem). (Die Lage von Sensor und Ventil zueinander ist herstellerabhängig.)',
             },
           ],
         },

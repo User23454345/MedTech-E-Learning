@@ -416,7 +416,7 @@ const examPool: Question[] = [
   {
     id: 'vent-x-par-pbw-mann',
     kind: 'numeric',
-    prompt: 'Berechne das Standardkörpergewicht (PBW) eines Mannes mit 175 cm Körpergröße (eine Nachkommastelle).',
+    prompt: 'Berechne das Sollgewicht (PBW) eines Mannes mit 175 cm Körpergröße (eine Nachkommastelle).',
     answer: 70.6,
     tolerance: 1,
     unit: 'kg',
@@ -634,7 +634,7 @@ const examPool: Question[] = [
     options: ['PEEP', 'Pneumothorax', 'Plateaudruck', 'Patientenbewegung'],
     correct: 1,
     explanation:
-      'DOPES: Displacement, Obstruction, **Pneumothorax**, Equipment, Stacked Breaths. Ein (Spannungs-)Pneumothorax ist eine lebensbedrohliche Ursache plötzlich steigender Drücke und Entsättigung beim beatmeten Patienten.',
+      'DOPES: Dislokation (Displacement), Obstruktion (Obstruction), **Pneumothorax**, Equipment, Stacking (Stacked Breaths, Auto-PEEP). Ein (Spannungs-)Pneumothorax ist eine lebensbedrohliche Ursache plötzlich steigender Drücke und Entsättigung beim beatmeten Patienten.',
     topic: 'Alarme & Sicherheit',
     difficulty: 1,
   },
@@ -710,7 +710,7 @@ const examPool: Question[] = [
     kind: 'single',
     prompt: 'Welches Tidalvolumen empfiehlt die lungenprotektive Beatmung bei ARDS als Ausgangspunkt?',
     options: [
-      'ca. 6 ml/kg Standardkörpergewicht (PBW)',
+      'ca. 6 ml/kg Sollgewicht (PBW)',
       'ca. 6 ml/kg tatsächliches Körpergewicht',
       'ca. 10–12 ml/kg PBW',
       'Immer genau 500 ml',
@@ -874,7 +874,7 @@ const blitzPool: Question[] = [
   {
     id: 'vent-p-pbw-groesse',
     kind: 'truefalse',
-    prompt: 'Das Standardkörpergewicht (PBW) wird aus Körpergröße und Geschlecht berechnet.',
+    prompt: 'Das Sollgewicht (PBW) wird aus Körpergröße und Geschlecht berechnet.',
     correct: true,
     explanation: 'Richtig. Das tatsächliche Körpergewicht spielt keine Rolle, da die Lungengröße nicht mit dem Gewicht wächst.',
     topic: 'Parameter',

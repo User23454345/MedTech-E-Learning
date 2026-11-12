@@ -16,6 +16,11 @@ describe('quizLogic', () => {
     expect(parseNumber(' 7.25 ')).toBe(7.25);
     expect(parseNumber('abc')).toBeNull();
     expect(parseNumber('')).toBeNull();
+    // mehrdeutige Tausenderpunkte werden abgelehnt, Dezimalwerte < 1 bleiben gültig
+    expect(parseNumber('1.000')).toBeNull();
+    expect(parseNumber('12.500')).toBeNull();
+    expect(parseNumber('0.500')).toBe(0.5);
+    expect(parseNumber('1000')).toBe(1000);
   });
   it('prüft numerische Toleranz', () => {
     const q = pool[8];
