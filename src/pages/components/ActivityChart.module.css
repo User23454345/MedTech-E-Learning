@@ -1,0 +1,64 @@
+.figure {
+  margin: 0;
+}
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-5);
+  margin-bottom: var(--sp-3);
+  font-size: var(--fs-sm);
+  color: var(--c-text-2);
+}
+.summary strong {
+  color: var(--c-text);
+}
+.readout {
+  margin-left: auto;
+  color: var(--c-text-3);
+  font-variant-numeric: tabular-nums;
+}
+.svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.grid {
+  stroke: var(--c-border);
+  stroke-dasharray: 2 4;
+}
+.baseline {
+  stroke: var(--c-border-strong);
+}
+.tick {
+  font-size: 10px;
+  fill: var(--c-text-3);
+  font-variant-numeric: tabular-nums;
+}
+.label {
+  font-size: 10px;
+  fill: var(--c-text-3);
+}
+.labelToday {
+  font-size: 10px;
+  font-weight: 700;
+  fill: var(--c-text);
+}
+.hit {
+  fill: transparent;
+}
+.bar {
+  fill: var(--c-primary-300);
+  transition: fill var(--dur-fast);
+}
+.barToday {
+  fill: var(--c-primary-600);
+}
+.barHover .bar {
+  fill: var(--c-primary-500);
+}
+.barHover .hit {
+  fill: var(--c-surface-3);
+}
+.zero {
+  fill: var(--c-border-strong);
+}

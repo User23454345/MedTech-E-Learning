@@ -1,0 +1,46 @@
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.main {
+  flex: 1;
+  outline: none;
+  padding-top: var(--sp-8);
+}
+.main:focus-visible {
+  box-shadow: none;
+}
+.skip {
+  position: absolute;
+  left: var(--sp-4);
+  top: -60px;
+  z-index: 200;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-sm);
+  background: var(--c-primary-600);
+  color: var(--c-text-inverse);
+  font-weight: 600;
+  transition: top var(--dur-fast);
+}
+.skip:focus {
+  top: var(--sp-3);
+}
+@media (max-width: 860px) {
+  .main {
+    padding-top: var(--sp-6);
+  }
+}
+/* Toasts auf Mobilgeräten oberhalb der Tab-Leiste anzeigen */
+@media (max-width: 860px) {
+  .toastHost > div {
+    bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+}
+
+.loading {
+  min-height: 50vh;
+  display: grid;
+  place-items: center;
+  color: var(--c-text-3);
+}

@@ -1,0 +1,107 @@
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  height: 100%;
+  padding: var(--sp-6);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  color: var(--c-text);
+  text-decoration: none !important;
+  overflow: hidden;
+}
+.compact {
+  padding: var(--sp-5);
+}
+.link {
+  transition: transform var(--dur-med) var(--ease-out), box-shadow var(--dur-med), border-color var(--dur-med);
+}
+.link::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--c-primary-500), var(--c-accent-400));
+  opacity: 0;
+  transition: opacity var(--dur-med);
+}
+.link:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--c-primary-200);
+}
+.link:hover::before {
+  opacity: 1;
+}
+.disabled {
+  background: var(--c-surface-2);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+.disabled .title,
+.disabled .tagline {
+  color: var(--c-text-3);
+}
+.badgeMuted {
+  filter: grayscale(1);
+  opacity: 0.7;
+}
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-2);
+}
+.ringText {
+  font-size: var(--fs-xs);
+}
+.cat {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--c-accent-600);
+}
+.title {
+  margin: 0;
+  font-size: var(--fs-lg);
+}
+.tagline {
+  margin: 0;
+  color: var(--c-text-2);
+  font-size: var(--fs-sm);
+}
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  margin-top: auto;
+  padding-top: var(--sp-3);
+  color: var(--c-text-3);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+.meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+  color: var(--c-primary-600);
+  font-weight: 700;
+  font-size: var(--fs-sm);
+}
+.link:hover .cta svg {
+  transform: translateX(3px);
+}
+.cta svg {
+  transition: transform var(--dur-fast);
+}

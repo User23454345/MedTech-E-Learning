@@ -167,7 +167,7 @@ export type Block =
   | { type: 'keyTerms'; terms: { term: string; definition: string }[] }
   | {
       type: 'formula';
-      /** Formel als Klartext mit Unicode, z. B. "P_aw = V/C + R · V̇ + PEEP" */
+      /** Formel als Klartext mit Unicode, z. B. "P_aw = V/C + R · V̇ + PEEP"; "\n" trennt mehrere Zeilen */
       expression: string;
       explanation: string;
       variables?: { symbol: string; meaning: string; unit?: string }[];

@@ -224,7 +224,7 @@ export const BADGES: BadgeDef[] = [
   { id: 'player', title: 'Spielerisch gelernt', description: 'Drei verschiedene Lernspiele absolviert.', icon: 'gamepad', tier: 'bronze', check: (s) => Object.keys(s.games).length >= 3 },
   { id: 'perfectionist', title: 'Fehlerfrei', description: 'Ein Lernspiel mit 100 % abgeschlossen.', icon: 'star', tier: 'silber', check: (s) => Object.values(s.games).some((g) => g.bestScore >= 1) },
   { id: 'simulator', title: 'Am Regler', description: 'Erste Simulator-Mission gelöst.', icon: 'sliders', tier: 'bronze', check: (s) => s.simulator.challengesSolved.length >= 1 },
-  { id: 'sim-master', title: 'Beatmungsstratege', description: 'Alle Simulator-Missionen gelöst.', icon: 'lungs', tier: 'gold', check: (s) => s.simulator.challengesSolved.length >= 5 },
+  { id: 'sim-master', title: 'Beatmungsstratege', description: 'Alle Simulator-Missionen gelöst.', icon: 'lungs', tier: 'gold', check: (s) => s.simulator.challengesSolved.length >= 6 },
   { id: 'module-done', title: 'Modul gemeistert', description: 'Alle Lektionen eines Moduls abgeschlossen.', icon: 'layers', tier: 'silber', check: (s) => completedLessons(s) >= 5 },
   { id: 'exam-pass', title: 'Zertifiziert', description: 'Einen Abschlusstest bestanden.', icon: 'award', tier: 'gold', check: (s) => Object.values(s.exams).some((e) => e.passed) },
   { id: 'exam-perfect', title: 'Bestnote', description: 'Einen Abschlusstest mit 100 % bestanden.', icon: 'trophy', tier: 'gold', check: (s) => Object.values(s.exams).some((e) => e.bestScore >= 1) },

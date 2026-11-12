@@ -1,13 +1,16 @@
+import { lazy } from 'react';
 import { HashRouter, Route, Routes } from 'react-router-dom';
 import { ProgressProvider } from '@/state/progress';
 import { AppShell } from '@/components/layout/AppShell';
 import HomePage from '@/pages/HomePage';
-import CatalogPage from '@/pages/CatalogPage';
-import ModulePage from '@/pages/ModulePage';
-import LessonPage from '@/pages/LessonPage';
-import TrainingPage from '@/pages/TrainingPage';
-import ProfilePage from '@/pages/ProfilePage';
-import NotFoundPage from '@/pages/NotFoundPage';
+
+// Unterseiten lazy laden → kleineres Start-Bundle
+const CatalogPage = lazy(() => import('@/pages/CatalogPage'));
+const ModulePage = lazy(() => import('@/pages/ModulePage'));
+const LessonPage = lazy(() => import('@/pages/LessonPage'));
+const TrainingPage = lazy(() => import('@/pages/TrainingPage'));
+const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
+const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 /**
  * Routen (HashRouter → funktioniert auf jedem statischen Hosting):
@@ -21,7 +24,7 @@ import NotFoundPage from '@/pages/NotFoundPage';
 export default function App() {
   return (
     <ProgressProvider>
-      <HashRouter>
+      <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
           <Route element={<AppShell />}>
             <Route index element={<HomePage />} />

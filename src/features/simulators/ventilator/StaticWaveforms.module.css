@@ -1,0 +1,48 @@
+.monitor {
+  background: var(--c-monitor-bg);
+  border-radius: var(--r-lg);
+  padding: var(--sp-3) var(--sp-3) var(--sp-2);
+  display: grid;
+  gap: var(--sp-1);
+  color: var(--c-monitor-text);
+}
+.panel { position: relative; }
+.label {
+  position: absolute;
+  top: 2px;
+  right: var(--sp-2);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+}
+.unit { font-weight: 500; opacity: 0.75; color: var(--c-monitor-text); }
+.svg { display: block; width: 100%; height: clamp(84px, 16vw, 112px); }
+.grid { stroke: var(--c-monitor-grid); stroke-width: 1; }
+.zero { stroke: var(--c-monitor-text); stroke-opacity: 0.35; stroke-width: 1; }
+.ticks { position: absolute; left: 0; top: 0; bottom: 0; pointer-events: none; }
+.ticks span {
+  position: absolute;
+  right: 5px;
+  transform: translateY(-50%);
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--c-monitor-text);
+  opacity: 0.7;
+  line-height: 1;
+}
+.line { fill: none; stroke-width: 2; stroke-linejoin: round; }
+.ref { fill: none; stroke: var(--c-monitor-text); stroke-opacity: 0.32; stroke-width: 1.5; stroke-dasharray: 4 3; }
+.legend {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  opacity: 0.8;
+  padding-left: var(--sp-2);
+}
+.legendRef {
+  width: 22px;
+  border-top: 2px dashed var(--c-monitor-text);
+  opacity: 0.6;
+}

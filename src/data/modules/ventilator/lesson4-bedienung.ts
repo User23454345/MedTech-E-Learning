@@ -77,7 +77,7 @@ export const lessonBedienung: Lesson = {
         },
         {
           type: 'formula',
-          expression: 'PBW♂ = 50 + 0,91 · (Größe − 152,4)      PBW♀ = 45,5 + 0,91 · (Größe − 152,4)',
+          expression: 'PBW♂ = 50 + 0,91 · (Größe − 152,4)\nPBW♀ = 45,5 + 0,91 · (Größe − 152,4)',
           explanation:
             'Formel nach ARDS Network (2000). Beispiel: Mann, 175 cm → PBW = 50 + 0,91 · 22,6 ≈ 70,6 kg. Ein VT von 6 ml/kg PBW entspricht dann etwa 423 ml – unabhängig davon, ob der Patient 70 oder 130 kg wiegt.',
           variables: [

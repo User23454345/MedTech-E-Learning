@@ -1,0 +1,87 @@
+.instr { color: var(--c-text-2); line-height: 1.6; margin-bottom: var(--sp-4); }
+.instr p { margin: 0 0 var(--sp-2); }
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 56px;
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-2);
+  background: var(--c-surface);
+  border: 1.5px solid var(--c-border);
+  border-radius: var(--r-md);
+  transition: border-color var(--dur-fast), background var(--dur-fast), box-shadow var(--dur-fast), transform var(--dur-fast);
+}
+.grip {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 40px;
+  color: var(--c-text-3);
+  border-radius: var(--r-sm);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.grip:hover { background: var(--c-surface-3); color: var(--c-text-2); }
+.gripOff { visibility: hidden; }
+.pos {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--c-primary-50);
+  color: var(--c-primary-700);
+  font-size: var(--fs-sm);
+  font-weight: 800;
+}
+.text { flex: 1; min-width: 0; font-size: var(--fs-sm); line-height: 1.5; color: var(--c-text); }
+.arrows { display: flex; flex-direction: column; gap: 2px; flex: none; }
+.arrow {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  background: var(--c-surface-2);
+  color: var(--c-text-2);
+  cursor: pointer;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.arrow:hover:not([aria-disabled='true']) { background: var(--c-primary-50); color: var(--c-primary-700); }
+.arrow[aria-disabled='true'] { opacity: 0.35; cursor: default; }
+.up { transform: rotate(180deg); }
+.mark { display: grid; place-items: center; flex: none; width: 26px; height: 26px; border-radius: 50%; color: var(--c-text-inverse); }
+.ok { border-color: var(--c-success); background: var(--c-success-bg); }
+.ok .mark { background: var(--c-success); }
+.ok .pos { background: var(--c-success); color: var(--c-text-inverse); }
+.bad { border-color: var(--c-danger); background: var(--c-danger-bg); animation: nudge 380ms var(--ease-out); }
+.bad .mark { background: var(--c-danger); }
+.dragging { border-color: var(--c-primary-400); box-shadow: var(--shadow-md); transform: scale(1.015); background: var(--c-primary-50); position: relative; z-index: 1; }
+.dragging .grip { cursor: grabbing; }
+.moved { animation: settle var(--dur-med) var(--ease-spring); }
+.footer { display: flex; justify-content: flex-end; align-items: center; gap: var(--sp-4); flex-wrap: wrap; margin-top: var(--sp-4); }
+.feedback { display: inline-flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-sm); color: var(--c-text-2); margin-right: auto; }
+.end { display: flex; flex-direction: column; gap: var(--sp-4); margin-top: var(--sp-5); }
+.solution { padding: var(--sp-4) var(--sp-5); border-radius: var(--r-md); background: var(--c-success-bg); border: 1px solid var(--c-success); }
+.solTitle { margin: 0 0 var(--sp-2); font-size: var(--fs-sm); color: var(--c-success); text-transform: uppercase; letter-spacing: 0.05em; }
+.solList { margin: 0; padding-left: 1.4em; font-size: var(--fs-sm); line-height: 1.7; color: var(--c-text); }
+.explain { display: flex; gap: var(--sp-3); padding: var(--sp-4) var(--sp-5); border-radius: var(--r-md); background: var(--c-info-bg); color: var(--c-text-2); line-height: 1.6; font-size: var(--fs-sm); }
+.explain > svg { flex: none; color: var(--c-primary-600); margin-top: 3px; }
+.explain p { margin: 0 0 var(--sp-2); }
+.explain p:last-child { margin: 0; }
+@keyframes settle { from { transform: scale(0.98); background: var(--c-primary-50); } to { transform: none; } }
+@keyframes nudge { 30% { transform: translateX(-4px); } 60% { transform: translateX(3px); } }
+@media (max-width: 480px) {
+  .item { gap: var(--sp-2); }
+  .pos { width: 24px; height: 24px; font-size: var(--fs-xs); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bad, .moved { animation: none; }
+  .dragging { transform: none; }
+}

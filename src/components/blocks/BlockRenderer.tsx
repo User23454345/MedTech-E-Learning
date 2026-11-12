@@ -70,8 +70,12 @@ export function BlockView({ block, module, contextId }: { block: Block; module: 
     case 'formula':
       return (
         <figure className={s.formula} style={{ margin: 0 }}>
-          <div className={s.formulaExpr} aria-label={`Formel: ${block.expression}`}>
-            <InlineMd text={block.expression} />
+          <div className={s.formulaExpr} aria-label={`Formel: ${block.expression.replace(/\n/g, '; ')}`}>
+            {block.expression.split('\n').map((line, i) => (
+              <div key={i}>
+                <InlineMd text={line} />
+              </div>
+            ))}
           </div>
           <figcaption className={s.formulaBody}>
             <Markdown md={block.explanation} className={s.prose} />

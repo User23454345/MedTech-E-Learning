@@ -22,6 +22,8 @@
   transition: background var(--dur-fast), transform var(--dur-fast), box-shadow var(--dur-fast), border-color var(--dur-fast);
   user-select: none;
 }
+/* Icons dürfen in engen Flex-Layouts nicht auf 0 px schrumpfen (max-width:100 % aus global.css) */
+.btn > svg { flex-shrink: 0; max-width: none; }
 .btn:hover:not(:disabled) { background: var(--btn-hover); }
 .btn:active:not(:disabled) { transform: translateY(1px) scale(0.99); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -91,6 +93,7 @@
   color: var(--c-text-2);
   white-space: nowrap;
 }
+.chip > svg { flex-shrink: 0; max-width: none; }
 .chip-primary { background: var(--c-primary-50); color: var(--c-primary-700); }
 .chip-accent { background: var(--c-accent-50); color: var(--c-accent-700); }
 .chip-success { background: var(--c-success-bg); color: var(--c-success); }

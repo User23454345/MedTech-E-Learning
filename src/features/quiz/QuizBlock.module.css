@@ -1,0 +1,15 @@
+.dots { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; max-width: 220px; }
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--c-border-strong);
+  transition: background var(--dur-med), transform var(--dur-med) var(--ease-spring);
+}
+.dotCur { background: var(--c-primary-500); transform: scale(1.3); }
+.dotOk { background: var(--c-success); }
+.dotBad { background: var(--c-danger); }
+.slide { animation: slideIn var(--dur-med) var(--ease-out) both; }
+.footer { display: flex; justify-content: flex-end; margin-top: var(--sp-4); }
+@keyframes slideIn { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .slide { animation: none; } }

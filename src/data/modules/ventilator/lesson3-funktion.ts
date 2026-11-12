@@ -62,7 +62,7 @@ Drei Messgrößen beschreiben jeden Atemzug:
           type: 'formula',
           expression: 'C = ΔV / ΔP',
           explanation:
-            'Die Compliance gibt an, wie viel Volumen pro Druckänderung in das respiratorische System passt. Klinisch wird meist die statische Compliance des respiratorischen Systems berechnet: C_stat = VT / (Pplat − PEEP). Die dynamische Compliance verwendet statt des Plateaudrucks den Spitzendruck (VT / (Ppeak − PEEP)) und enthält daher auch resistive Anteile – sie ist immer kleiner oder gleich der statischen.',
+            'Die Compliance gibt an, wie viel Volumen pro Druckänderung in das respiratorische System passt. Klinisch wird meist die statische Compliance des respiratorischen Systems berechnet: C~stat~ = V~T~ / (P~plat~ − PEEP). Die dynamische Compliance verwendet statt des Plateaudrucks den Spitzendruck (V~T~ / (P~peak~ − PEEP)) und enthält daher auch resistive Anteile – sie ist immer kleiner oder gleich der statischen.',
           variables: [
             { symbol: 'C', meaning: 'Compliance', unit: 'ml/cmH₂O' },
             { symbol: 'ΔV', meaning: 'Volumenänderung (z. B. Tidalvolumen VT)', unit: 'ml' },
@@ -113,7 +113,7 @@ Deshalb ist der **Endotrachealtubus** oft der größte Einzelwiderstand: Ein Wec
               tolerance: 1,
               unit: 'ml/cmH₂O',
               explanation:
-                'C_stat = VT / (Pplat − PEEP) = 500 ml / (20 − 8) cmH~2~O = 500 / 12 ≈ 41,7 ml/cmH~2~O. Das liegt unter dem Normbereich und spricht für eine eingeschränkte Dehnbarkeit.',
+                'C~stat~ = V~T~ / (P~plat~ − PEEP) = 500 ml / (20 − 8) cmH~2~O = 500 / 12 ≈ 41,7 ml/cmH~2~O. Das liegt unter dem Normbereich und spricht für eine eingeschränkte Dehnbarkeit.',
               topic: 'Physik',
               difficulty: 2,
             },
@@ -145,11 +145,11 @@ Deshalb ist der **Endotrachealtubus** oft der größte Einzelwiderstand: Ein Wec
         },
         {
           type: 'formula',
-          expression: 'P_aw = PEEP + V / C + R · V̇',
+          expression: 'P~aw~ = PEEP + V / C + R · V̇',
           explanation:
-            'Der Atemwegsdruck setzt sich zu jedem Zeitpunkt aus drei Anteilen zusammen: dem endexspiratorischen Ausgangsdruck, dem elastischen Anteil (Druck, um das bereits eingeströmte Volumen gegen die Rückstellkraft zu halten) und dem resistiven Anteil (Druck, um den aktuellen Flow durch die Atemwege zu treiben). Bei aktiver Atemanstrengung des Patienten kommt zusätzlich der Muskeldruck hinzu (P_aw + P_mus = …).',
+            'Der Atemwegsdruck setzt sich zu jedem Zeitpunkt aus drei Anteilen zusammen: dem endexspiratorischen Ausgangsdruck, dem elastischen Anteil (Druck, um das bereits eingeströmte Volumen gegen die Rückstellkraft zu halten) und dem resistiven Anteil (Druck, um den aktuellen Flow durch die Atemwege zu treiben). Bei aktiver Atemanstrengung des Patienten kommt zusätzlich der Muskeldruck hinzu (P~aw~ + P~mus~ = …).',
           variables: [
-            { symbol: 'P_aw', meaning: 'Atemwegsdruck (am Y-Stück)', unit: 'cmH₂O' },
+            { symbol: 'P~aw~', meaning: 'Atemwegsdruck (am Y-Stück)', unit: 'cmH₂O' },
             { symbol: 'PEEP', meaning: 'positiver endexspiratorischer Druck (Ausgangsdruck)', unit: 'cmH₂O' },
             { symbol: 'V', meaning: 'seit Inspirationsbeginn eingeströmtes Volumen', unit: 'L' },
             { symbol: 'C', meaning: 'Compliance des respiratorischen Systems', unit: 'L/cmH₂O' },
@@ -560,7 +560,7 @@ Das Modell ist dennoch hervorragend geeignet, um Zusammenhänge zu verstehen und
           terms: [
             { term: 'Compliance (C)', definition: 'Dehnbarkeit des respiratorischen Systems, C = ΔV/ΔP; statisch: VT/(Pplat − PEEP).' },
             { term: 'Resistance (R)', definition: 'Strömungswiderstand von Tubus und Atemwegen, R = ΔP/V̇; stark abhängig vom Radius (∝ 1/r⁴).' },
-            { term: 'Bewegungsgleichung', definition: 'P_aw = PEEP + V/C + R · V̇ – Druck als Summe aus Ausgangsdruck, elastischem und resistivem Anteil.' },
+            { term: 'Bewegungsgleichung', definition: 'P~aw~ = PEEP + V/C + R · V̇ – Druck als Summe aus Ausgangsdruck, elastischem und resistivem Anteil.' },
             { term: 'Plateaudruck (Pplat)', definition: 'Druck bei Nullflow während einer endinspiratorischen Pause; Näherung für den Alveolardruck.' },
             { term: 'Driving Pressure (ΔP)', definition: 'Pplat − PEEP; Maß für die zyklische Dehnung der Lunge, Ziel ≤ 15 cmH₂O.' },
             { term: 'Zeitkonstante (τ)', definition: 'τ = R · C; nach 3 τ ist die Lunge zu etwa 95 % entleert.' },

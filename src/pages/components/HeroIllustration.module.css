@@ -1,0 +1,139 @@
+.wrap {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  margin-inline: auto;
+}
+.glow {
+  position: absolute;
+  inset: 8% 6% 14%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(45, 195, 173, 0.28), rgba(31, 107, 240, 0.14) 60%, transparent);
+  filter: blur(18px);
+}
+.svg {
+  position: relative;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 22px 34px rgba(15, 31, 54, 0.16));
+}
+.grid {
+  stroke: var(--c-monitor-grid);
+  stroke-width: 1;
+}
+.wave {
+  fill: none;
+  stroke-width: 2.2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  animation: sweep 4.3s linear infinite;
+}
+.pressure {
+  stroke: var(--c-wave-pressure);
+}
+.flow {
+  stroke: var(--c-wave-flow);
+}
+.volume {
+  stroke: var(--c-wave-volume);
+}
+@keyframes sweep {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-150px);
+  }
+}
+.monoSmall {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  fill: var(--c-monitor-text);
+  opacity: 0.75;
+}
+.pressureText {
+  fill: var(--c-wave-pressure);
+}
+.flowText {
+  fill: var(--c-wave-flow);
+}
+.volumeText {
+  fill: var(--c-wave-volume);
+}
+.valLabel {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  fill: var(--c-monitor-text);
+  opacity: 0.6;
+}
+.valNum {
+  font-family: var(--font-sans);
+  font-size: 20px;
+  font-weight: 700;
+  fill: var(--c-monitor-text);
+}
+.valUnit {
+  font-size: 9px;
+  font-weight: 500;
+  opacity: 0.7;
+}
+.led {
+  animation: blink 2.4s ease-in-out infinite;
+}
+@keyframes blink {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.float {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-md);
+  animation: float 6s ease-in-out infinite;
+}
+.floatA {
+  left: -4%;
+  bottom: 20%;
+}
+.floatB {
+  right: -2%;
+  top: -2%;
+  animation-delay: -3s;
+}
+.floatDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--c-success);
+  box-shadow: 0 0 0 4px var(--c-success-bg);
+}
+.floatLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--c-text-3);
+}
+.floatValue {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--c-text);
+  white-space: nowrap;
+}
+@keyframes float {
+  50% {
+    transform: translateY(-6px);
+  }
+}
+@media (max-width: 480px) {
+  .float {
+    display: none;
+  }
+}

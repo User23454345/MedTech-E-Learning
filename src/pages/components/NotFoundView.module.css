@@ -1,0 +1,71 @@
+.box {
+  max-width: 620px;
+  margin: var(--sp-10) auto;
+  padding: var(--sp-10) var(--sp-8);
+  text-align: center;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-md);
+}
+.art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  margin: 0 auto var(--sp-6);
+  max-width: 260px;
+}
+.ecg {
+  width: 100%;
+  height: auto;
+  fill: none;
+  stroke: var(--c-primary-200);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 420;
+  stroke-dashoffset: 420;
+  animation: draw 2.4s var(--ease-out) forwards;
+}
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.icon {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--c-primary-500), var(--c-accent-400));
+  color: var(--c-text-inverse);
+  box-shadow: var(--shadow-md);
+}
+.code {
+  font-size: var(--fs-xs);
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--c-primary-600);
+  margin-bottom: var(--sp-2);
+}
+.title {
+  font-size: var(--fs-2xl);
+}
+.text {
+  color: var(--c-text-2);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-6);
+}
+@media (max-width: 480px) {
+  .box {
+    padding: var(--sp-8) var(--sp-5);
+  }
+}

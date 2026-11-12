@@ -1,0 +1,640 @@
+.root {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  font-size: var(--fs-sm);
+  color: var(--c-text);
+}
+
+/* ---------- Steuerung ---------- */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  align-items: center;
+  justify-content: space-between;
+}
+.transport {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+}
+.reducedHint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-xs);
+  color: var(--c-text-3);
+}
+@container (max-width: 420px) {
+  .hideSm {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+/* ---------- Zeitleiste ---------- */
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 4px;
+}
+.timeline li {
+  flex-basis: 0;
+  min-width: 0;
+}
+.phaseBtn {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  background: var(--c-surface);
+  color: var(--c-text-2);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color var(--dur-fast), color var(--dur-fast), background var(--dur-fast);
+}
+.phaseBtn:hover {
+  border-color: var(--c-primary-300);
+}
+.phaseBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+.phaseFill {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--c-primary-500), var(--c-accent-400));
+  transform-origin: left center;
+}
+.phaseNum {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-full);
+  background: var(--c-surface-3);
+  color: var(--c-text-2);
+  font-size: 11px;
+  font-weight: 700;
+}
+.phaseName {
+  position: relative;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.phaseActive {
+  border-color: var(--c-primary-400);
+  background: var(--c-primary-50);
+  color: var(--c-primary-800);
+}
+.phaseActive .phaseNum {
+  background: var(--c-primary-600);
+  color: var(--c-text-inverse);
+}
+.phaseDone .phaseNum {
+  background: var(--c-accent-100);
+  color: var(--c-accent-700);
+}
+@container (max-width: 520px) {
+  .phaseName {
+    display: none;
+  }
+  .phaseBtn {
+    justify-content: center;
+  }
+}
+
+/* ---------- Schema + Erklärung ---------- */
+.main {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-4);
+  align-items: start;
+}
+@container (min-width: 820px) {
+  .main {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  }
+}
+.schematicCard {
+  min-width: 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: linear-gradient(180deg, var(--c-surface) 0%, var(--c-surface-2) 100%);
+  box-shadow: var(--shadow-sm);
+}
+.schematic {
+  display: block;
+  width: 100%;
+  height: auto;
+  font-family: var(--font-sans);
+}
+
+/* Schema-Elemente */
+.devLabel {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  fill: var(--c-text-3);
+}
+.smallLabel {
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--c-text-2);
+}
+.tube {
+  fill: none;
+  stroke: var(--c-primary-300);
+  stroke-width: 16;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.tubeInner {
+  fill: none;
+  stroke: var(--c-primary-50);
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.gas {
+  fill: none;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 8 12;
+  opacity: 0.18;
+  transition: opacity var(--dur-med);
+}
+.gasOn {
+  opacity: 1;
+}
+.gasInsp {
+  stroke: var(--c-accent-500);
+}
+.gasExp {
+  stroke: var(--c-primary-500);
+}
+.arrowOut {
+  fill: none;
+  stroke: var(--c-text-3);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.yPiece {
+  fill: none;
+  stroke: var(--c-primary-600);
+  stroke-width: 14;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.yPieceInner {
+  fill: none;
+  stroke: var(--c-primary-200);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.senseLine {
+  fill: none;
+  stroke: var(--c-text-3);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 3;
+}
+
+/* Ventile */
+.valveBox {
+  fill: var(--c-surface);
+  stroke: var(--c-border-strong);
+  stroke-width: 1.5;
+  transition: fill var(--dur-med), stroke var(--dur-med);
+}
+.valveBody {
+  stroke-width: 1.75;
+  stroke-linejoin: round;
+  transition: fill var(--dur-med), stroke var(--dur-med);
+}
+.valveStem {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: d var(--dur-med) var(--ease-out);
+}
+.valveName {
+  font-size: 11px;
+  font-weight: 700;
+  fill: var(--c-text);
+}
+.valveState {
+  font-size: 10px;
+  font-weight: 600;
+}
+.valve-open .valveBox {
+  fill: var(--c-success-bg);
+  stroke: var(--c-success);
+}
+.valve-open .valveBody {
+  fill: var(--c-surface);
+  stroke: var(--c-success);
+}
+.valve-open .valveStem {
+  stroke: var(--c-success);
+}
+.valve-open .valveState {
+  fill: var(--c-success);
+}
+.valve-closed .valveBody {
+  fill: var(--c-surface-3);
+  stroke: var(--c-text-3);
+}
+.valve-closed .valveStem {
+  stroke: var(--c-text-2);
+}
+.valve-closed .valveState {
+  fill: var(--c-text-3);
+}
+.valve-peep .valveBox {
+  fill: var(--c-accent-50);
+  stroke: var(--c-accent-500);
+}
+.valve-peep .valveBody {
+  fill: var(--c-accent-100);
+  stroke: var(--c-accent-600);
+}
+.valve-peep .valveStem {
+  stroke: var(--c-accent-600);
+}
+.valve-peep .valveState {
+  fill: var(--c-accent-700);
+}
+
+/* Manometer */
+.gaugeRim {
+  fill: var(--c-text-2);
+}
+.gaugeFace {
+  fill: var(--c-surface);
+}
+.gaugeTick {
+  stroke: var(--c-text-2);
+  stroke-width: 1.5;
+}
+.gaugeNum {
+  font-size: 9px;
+  font-weight: 600;
+  fill: var(--c-text-3);
+}
+.gaugePeep {
+  stroke: var(--c-accent-400);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.gaugeNeedle {
+  stroke: var(--c-danger);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+.gaugeHub {
+  fill: var(--c-text);
+}
+.gaugeUnit {
+  font-size: 9px;
+  fill: var(--c-text-3);
+}
+.gaugeVal {
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  fill: var(--c-text);
+}
+
+/* Lunge */
+.thorax {
+  fill: var(--c-surface-2);
+  stroke: var(--c-border-strong);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 5;
+}
+.trachea,
+.bronchi {
+  fill: none;
+  stroke: var(--c-text-3);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.bronchi {
+  stroke-width: 3;
+}
+.lung {
+  stroke: var(--c-danger);
+  stroke-opacity: 0.45;
+  stroke-width: 2;
+}
+.lungRest {
+  fill: none;
+  stroke: var(--c-text-3);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+}
+.triggerMark circle {
+  fill: none;
+  stroke: var(--c-primary-500);
+  stroke-width: 2;
+  animation: triggerPulse 0.9s ease-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes triggerPulse {
+  from {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+
+/* Erklärung */
+.explain {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-sm);
+}
+.explainHead {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: center;
+}
+.explainNum {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-md);
+  background: linear-gradient(135deg, var(--c-primary-500), var(--c-accent-400));
+  color: var(--c-text-inverse);
+  font-weight: 800;
+  font-size: var(--fs-lg);
+}
+.explainKicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--c-text-3);
+}
+.explainTitle {
+  margin: 0;
+  font-size: var(--fs-lg);
+  line-height: 1.25;
+}
+.facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+}
+.fact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+}
+.fact dt {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c-text-3);
+}
+.fact dd {
+  margin: 0;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--c-text);
+}
+.valveBadge {
+  display: inline-block;
+  padding: 1px var(--sp-2);
+  border-radius: var(--r-full);
+  font-size: 11px;
+  font-weight: 700;
+}
+.badge-open {
+  background: var(--c-success-bg);
+  color: var(--c-success);
+}
+.badge-closed {
+  background: var(--c-surface-3);
+  color: var(--c-text-2);
+}
+.badge-peep {
+  background: var(--c-accent-50);
+  color: var(--c-accent-700);
+}
+.explainBody {
+  color: var(--c-text-2);
+  line-height: 1.6;
+}
+.explainBody p {
+  margin: 0;
+}
+.note {
+  display: flex;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--c-warning-bg);
+  color: var(--c-text-2);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+}
+.note svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--c-warning);
+}
+
+/* ---------- Kurven ---------- */
+.monitor {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-lg);
+  background: var(--c-monitor-bg);
+  color: var(--c-monitor-text);
+  box-shadow: var(--shadow-md);
+}
+@container (min-width: 820px) {
+  .monitor {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: var(--sp-5);
+  }
+  .monitorLegend {
+    grid-column: 1 / -1;
+  }
+}
+.curve {
+  min-width: 0;
+}
+.curveHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+.curveLabel {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+.curveValue {
+  font-family: var(--font-mono);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.curveValue small {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  opacity: 0.8;
+}
+.curveSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.band {
+  fill: transparent;
+}
+.bandActive {
+  fill: var(--c-monitor-grid);
+  opacity: 0.8;
+}
+.gridLine {
+  stroke: var(--c-monitor-grid);
+  stroke-width: 1;
+}
+.zeroLine {
+  stroke: var(--c-text-3);
+  stroke-width: 1;
+}
+.axisText {
+  font-size: 9px;
+  fill: var(--c-monitor-text);
+  opacity: 0.6;
+  font-family: var(--font-mono);
+}
+.cursor {
+  stroke: var(--c-monitor-text);
+  stroke-width: 1;
+  opacity: 0.7;
+}
+.cursorDot {
+  stroke: var(--c-monitor-bg);
+  stroke-width: 1.5;
+}
+.monitorLegend {
+  margin: 0;
+  font-size: 11px;
+  color: var(--c-monitor-text);
+  opacity: 0.7;
+}
+
+/* ---------- Parameter ---------- */
+.params {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.paramGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--sp-2);
+}
+.param {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+}
+.paramAccent {
+  background: var(--c-primary-50);
+  border-color: var(--c-primary-100);
+}
+.paramLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c-text-3);
+}
+.paramValue {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--c-text);
+  font-variant-numeric: tabular-nums;
+}
+.modelNote {
+  display: flex;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--c-surface-3);
+  color: var(--c-text-2);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+}
+.modelNote svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--c-primary-600);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .triggerMark circle {
+    animation: none;
+    opacity: 0.6;
+  }
+  .gas,
+  .valveBox,
+  .valveBody,
+  .valveStem {
+    transition: none;
+  }
+}

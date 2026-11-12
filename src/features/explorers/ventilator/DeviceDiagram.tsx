@@ -8,7 +8,7 @@ import { CATEGORY_BY_ID, COMPONENT_BY_ID, type VentComponentId } from './deviceD
 import s from './DeviceDiagram.module.css';
 
 export const VIEW_W = 1000;
-export const VIEW_H = 600;
+export const VIEW_H = 625;
 
 export type GasFlowMode = 'off' | 'insp' | 'exp';
 export type QuizMark = 'correct' | 'wrong' | 'reveal';
@@ -27,7 +27,7 @@ const INSP_LIMB_D = 'M692 260 H730 Q762 260 762 292 V352 Q762 382 792 388';
 const EXP_LIMB_D = 'M792 412 Q772 420 748 420 H520';
 
 export const GEO: Record<VentComponentId, Geo> = {
-  'gas-supply': { box: [8, 200, 80, 130], center: [48, 265], label: [48, 348, 'middle'] },
+  'gas-supply': { box: [8, 200, 80, 150], center: [48, 275], label: [4, 368, 'start'] },
   blender: { box: [114, 222, 82, 76], center: [155, 260], label: [155, 212, 'middle'] },
   'insp-valve': { box: [206, 228, 66, 64], center: [239, 260], label: [239, 216, 'middle'] },
   'o2-sensor': { box: [280, 236, 44, 48], center: [302, 260], label: [302, 304, 'middle'] },
@@ -37,8 +37,8 @@ export const GEO: Record<VentComponentId, Geo> = {
   filter: { box: [530, 238, 60, 44], center: [560, 260], label: [560, 300, 'middle'] },
   humidifier: { box: [598, 204, 96, 136], center: [646, 272], label: [646, 358, 'middle'] },
   'insp-limb': { box: [692, 248, 102, 146], ringPath: INSP_LIMB_D, center: [762, 320], label: [774, 320, 'start'] },
-  'y-piece': { box: [790, 374, 66, 52], center: [822, 400], label: [822, 446, 'middle'] },
-  patient: { box: [814, 104, 182, 268], center: [905, 200], label: [905, 96, 'middle'] },
+  'y-piece': { box: [790, 374, 66, 52], center: [822, 400], label: [846, 368, 'start'] },
+  patient: { box: [814, 432, 182, 172], center: [905, 520], label: [905, 620, 'middle'] },
   'exp-limb': { box: [520, 404, 274, 30], ringPath: EXP_LIMB_D, center: [650, 420], label: [650, 446, 'middle'] },
   'exp-valve': { box: [330, 392, 76, 56], center: [368, 420], label: [368, 466, 'middle'] },
   'exp-flow-sensor': { box: [442, 400, 56, 40], center: [470, 420], label: [470, 392, 'middle'] },
@@ -51,9 +51,9 @@ export const GEO: Record<VentComponentId, Geo> = {
 const INSP_FLOW = [
   'M62 236 H100 V260 H692',
   'M62 306 H100 V260',
-  `${INSP_LIMB_D} L822 400 H885 Q905 400 905 380 V168`,
+  `${INSP_LIMB_D} L822 400 H885 Q905 400 905 420 V478`,
 ];
-const EXP_FLOW = ['M905 168 V380 Q905 400 885 400 H822 L792 412 Q772 420 748 420 H90 H56'];
+const EXP_FLOW = ['M905 478 V420 Q905 400 885 400 H822 L792 412 Q772 420 748 420 H90 H56'];
 
 export interface DeviceDiagramProps {
   selected: VentComponentId | null;
@@ -173,7 +173,7 @@ function DeviceDiagramImpl({ selected, explored, highlightCategory, flow, showLa
       <g className={s.tubes}>
         <path d={INSP_LIMB_D} />
         <path d={EXP_LIMB_D} />
-        <path d="M822 400 H885 Q905 400 905 380 V300" />
+        <path d="M822 400 H885 Q905 400 905 420 V446" />
       </g>
       <g className={s.tubesInner}>
         <path d={INSP_LIMB_D} />
@@ -184,13 +184,25 @@ function DeviceDiagramImpl({ selected, explored, highlightCategory, flow, showLa
       {flow !== 'off' && (
         <g className={cx(s.flow, flow === 'insp' ? s.flowInsp : s.flowExp)} aria-hidden="true">
           {(flow === 'insp' ? INSP_FLOW : EXP_FLOW).map((d) => (
-            <path key={d} d={d} pathLength={100} />
+            <path key={d} d={d} />
           ))}
         </g>
       )}
       <g className={s.exhaust} aria-hidden="true">
         <path d="M70 420 H48 M56 412 L46 420 L56 428" />
         <text x={46} y={445} textAnchor="middle">Abluft</text>
+      </g>
+
+      {/* ---------- Legende ---------- */}
+      <g className={s.legend} aria-hidden="true" transform="translate(826 112)">
+        <rect x={0} y={0} width={164} height={112} rx={12} />
+        <text x={14} y={24} className={s.legendTitle}>Legende</text>
+        <path d="M14 44 H44" className={s.legendInsp} />
+        <text x={54} y={48}>Inspiration</text>
+        <path d="M14 66 H44" className={s.legendExp} />
+        <text x={54} y={70}>Exspiration</text>
+        <path d="M14 88 H44" className={s.legendSig} />
+        <text x={54} y={92}>Steuersignal</text>
       </g>
 
       {/* ---------- Komponenten ---------- */}
@@ -223,7 +235,7 @@ function DeviceDiagramImpl({ selected, explored, highlightCategory, flow, showLa
       {hs(
         'gas-supply',
         <>
-          <rect x={8} y={200} width={44} height={130} rx={8} fill="var(--c-surface-3)" stroke="var(--c-border-strong)" strokeWidth={1.5} />
+          <rect x={8} y={200} width={44} height={150} rx={8} fill="var(--c-surface-3)" stroke="var(--c-border-strong)" strokeWidth={1.5} />
           <circle cx={30} cy={236} r={15} fill="var(--c-surface)" stroke="var(--c-text-2)" strokeWidth={2} />
           <text x={30} y={240} className={s.tiny} textAnchor="middle">O₂</text>
           <circle cx={30} cy={306} r={15} fill="var(--c-surface)" stroke="var(--c-text)" strokeWidth={2} />
@@ -231,7 +243,7 @@ function DeviceDiagramImpl({ selected, explored, highlightCategory, flow, showLa
           <text x={30} y={286} className={s.tiny} textAnchor="middle">Air</text>
           <rect x={52} y={230} width={12} height={12} rx={2} className={s.part} />
           <rect x={52} y={300} width={12} height={12} rx={2} className={s.part} />
-          <text x={30} y={326} className={s.micro} textAnchor="middle">5 bar</text>
+          <text x={30} y={340} className={s.micro} textAnchor="middle">5 bar</text>
         </>,
       )}
 
@@ -373,13 +385,12 @@ function DeviceDiagramImpl({ selected, explored, highlightCategory, flow, showLa
       {hs(
         'patient',
         <>
-          <path d="M893 150 C870 116 828 126 822 172 C815 220 820 262 846 272 C872 280 893 262 893 238 Z" fill="url(#vx-lung)" stroke="var(--c-danger)" strokeOpacity={0.5} strokeWidth={1.5} />
-          <path d="M917 150 C940 116 982 126 988 172 C995 220 990 262 964 272 C938 280 917 262 917 238 Z" fill="url(#vx-lung)" stroke="var(--c-danger)" strokeOpacity={0.5} strokeWidth={1.5} />
-          <path d="M905 300 V168 M905 168 L888 190 M905 168 L922 190" fill="none" stroke="var(--c-text-3)" strokeWidth={5} strokeLinecap="round" />
-          <path d="M905 168 L888 190 M905 168 L922 190 M888 190 L872 214 M922 190 L938 214" fill="none" stroke="var(--c-text-3)" strokeWidth={2.5} strokeLinecap="round" />
-          <path d="M905 380 V286" fill="none" stroke="var(--c-primary-300)" strokeWidth={9} strokeLinecap="round" />
-          <ellipse cx={905} cy={300} rx={11} ry={14} fill="var(--c-primary-100)" stroke="var(--c-primary-400)" strokeWidth={1.5} />
-          <path d="M885 400 Q905 400 905 380" fill="none" stroke="var(--c-primary-300)" strokeWidth={9} />
+          <path d="M893 470 C872 448 832 456 826 495 C820 540 826 580 850 590 C872 597 893 582 893 560 Z" fill="url(#vx-lung)" stroke="var(--c-danger)" strokeOpacity={0.5} strokeWidth={1.5} />
+          <path d="M917 470 C938 448 978 456 984 495 C990 540 984 580 960 590 C938 597 917 582 917 560 Z" fill="url(#vx-lung)" stroke="var(--c-danger)" strokeOpacity={0.5} strokeWidth={1.5} />
+          <path d="M905 456 V480" fill="none" stroke="var(--c-text-3)" strokeWidth={5} strokeLinecap="round" />
+          <path d="M905 480 L888 502 L874 528 M888 502 L896 524 M905 480 L922 502 L936 528 M922 502 L914 524" fill="none" stroke="var(--c-text-3)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M885 400 Q905 400 905 420 V458" fill="none" stroke="var(--c-primary-300)" strokeWidth={9} strokeLinecap="round" />
+          <ellipse cx={905} cy={446} rx={10} ry={12} fill="var(--c-primary-100)" stroke="var(--c-primary-400)" strokeWidth={1.5} />
         </>,
       )}
 
